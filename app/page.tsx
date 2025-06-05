@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
+import Head from 'next/head';
 
 type PickerType = "region" | "genre" | "decade" | "budget";
 
@@ -249,177 +250,169 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#181c2b] to-[#2a1a3a] text-[#eaf6fb] font-retro">
-      <nav className="w-full flex items-center justify-between px-8 py-4 bg-[#23243a]/90 shadow-lg z-10 border-b-4 border-[#00fff7]">
-        <div className="flex items-center gap-3">
-          <img src="/globe.svg" alt="Puddy Pictures Logo" className="h-10 w-10 animate-spin-slow" />
-          <span className="text-3xl font-extrabold tracking-tight text-[#00fff7] font-retro italic" style={{letterSpacing:'-1px'}}>Puddy Pictures</span>
-        </div>
-        <div className="flex gap-8 text-lg">
-          <a href="/" className="hover:text-[#ff00c8] transition font-semibold">Home</a>
-          <a href="/privacy" className="hover:text-[#ff00c8] transition font-semibold">Privacy</a>
-          <a href="/terms" className="hover:text-[#ff00c8] transition font-semibold">Terms</a>
-          <a href="/signup" className="hover:text-[#ff00c8] transition font-semibold">Sign Up</a>
-        </div>
-      </nav>
-      <section className="flex flex-col items-center justify-center flex-1 py-14 px-4 text-center">
-        <h1 className="text-6xl md:text-7xl font-extrabold mb-4 text-[#00fff7] font-retro italic tracking-tight" style={{letterSpacing:'-2px'}}>Discover Your Next Movie</h1>
-        <p className="text-2xl md:text-3xl text-[#eaf6fb]/90 mb-10 max-w-2xl mx-auto font-retro" style={{textShadow:'0 1px 0 #00fff7'}}>Let Puddy Pictures Picker surprise you with a film from around the world. Spin the wheels, get a random pick, and start watching!</p>
-        {/* Button Group for Picker/Club */}
-        <div className="flex justify-center mb-10 w-full max-w-2xl mx-auto gap-6">
-          <button
-            className={`px-8 py-4 text-2xl font-retro font-extrabold rounded-2xl border-4 transition-all duration-200 focus:outline-none shadow-lg ${activeTab === 'picker' ? 'bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] border-[#00fff7] scale-105' : 'bg-[#181c2b] text-[#a084ff] border-[#23243a] hover:bg-[#23243a] hover:text-[#00fff7]'}`}
-            onClick={() => setActiveTab('picker')}
-          >
-            🎲 Random Movie Picker
-          </button>
-          <button
-            className={`px-8 py-4 text-2xl font-retro font-extrabold rounded-2xl border-4 transition-all duration-200 focus:outline-none shadow-lg ${activeTab === 'club' ? 'bg-gradient-to-r from-[#ff00c8] to-[#00fff7] text-[#23243a] border-[#ff00c8] scale-105' : 'bg-[#181c2b] text-[#a084ff] border-[#23243a] hover:bg-[#23243a] hover:text-[#ff00c8]'}`}
-            onClick={() => setActiveTab('club')}
-          >
-            🌟 Weekly Movie Club Pick
-          </button>
-        </div>
-        {/* Button Content */}
-        {activeTab === 'picker' && (
-          <div className="w-full">
-            {/* Picker UI (was previously here) */}
-            {!showResult && (
-              <div className="w-full max-w-2xl mx-auto bg-[#23243a]/95 rounded-3xl shadow-2xl border-4 border-[#00fff7] p-10 flex flex-col items-center gap-8 animate-glow">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
-                  {order.map((type) => (
-                    <div key={type} className="flex flex-col items-start w-full">
-                      <label className="text-lg mb-2 font-bold text-[#00fff7] font-retro uppercase tracking-wider">{type.charAt(0).toUpperCase() + type.slice(1)}</label>
-                      <select
-                        className="text-lg p-3 rounded-xl border-2 border-[#00fff7] bg-[#1a2233] text-[#f3ede7] w-full font-retro shadow-[0_2px_8px_#00fff733]"
-                        value={selections[type] || ""}
-                        onChange={(e) => setSelections((prev) => ({ ...prev, [type]: e.target.value }))}
-                      >
-                        <option value="">Select {type}</option>
-                        {wheels[type].map((opt) => (
-                          <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                      </select>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex gap-6 w-full justify-center mt-4">
-                  <button
-                    className="text-2xl px-10 py-3 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-extrabold rounded-full shadow-lg hover:from-[#ff00c8] hover:to-[#00fff7] transition font-retro border-2 border-[#00fff7]"
-                    onClick={runSequence}
-                    disabled={spinning}
-                    style={{ opacity: spinning ? 0.6 : 1 }}
-                  >
-                    {spinning ? "Spinning..." : "Start Random Movie"}
-                  </button>
-                  <button
-                    className="text-2xl px-10 py-3 bg-[#1a2233] border-2 border-[#00fff7] text-[#00fff7] font-extrabold rounded-full shadow hover:bg-[#23243a] transition font-retro"
-                    onClick={resetAll}
-                    disabled={spinning}
-                  >
-                    Reset
-                  </button>
-                </div>
-                <div className="mt-4 text-xl text-[#00fff7] min-h-[40px] w-full text-center font-retro tracking-wider">
-                  {spinResults.map((r, i) => (
-                    <p key={i}>{r}</p>
-                  ))}
-                </div>
-              </div>
-            )}
-            {showResult && result && (
-              <div className="w-full max-w-5xl mx-auto bg-[#23243a]/98 rounded-3xl shadow-2xl border-4 border-[#00fff7] p-12 flex flex-col md:flex-row gap-14 items-center mt-10 animate-fade-in min-h-[520px] min-w-[340px] md:min-h-[600px] md:min-w-[900px]">
-                {/* Poster Area */}
-                <div className="flex-[1.2] flex justify-center items-center">
-                  {result.poster_url && (
-                    <img
-                      src={result.poster_url}
-                      alt={result.title}
-                      className="rounded-2xl shadow-2xl max-w-[420px] max-h-[80vh] border-4 border-[#00fff7] bg-[#1a2233]"
-                      style={{boxShadow:'0 4px 32px #00fff7', width: '100%', height: 'auto', objectFit: 'cover'}} />
-                  )}
-                </div>
-                {/* Info Area */}
-                <div className="flex-[2] flex flex-col justify-center items-start p-2 md:p-6 bg-[#23243a]/80 rounded-2xl border-2 border-[#00fff7] min-h-[420px] w-full">
-                  <h2 className="text-5xl mb-4 font-extrabold text-[#00fff7] font-retro italic tracking-tight" style={{letterSpacing:'-1px',textShadow:'0 1px 0 #fff, 2px 2px 0 #00fff7'}}>
-                    {result.title} <span className="text-3xl text-[#fffbe7] font-normal">({result.release_year})</span>
-                  </h2>
-                  <p className="mb-6 text-lg text-[#00fff7] font-bold">Description:<span className="text-[#f3ede7] font-normal ml-2">{result.description}</span></p>
-                  <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-lg w-full mb-4">
-                    <span className="font-bold text-[#00fff7]">Director:</span>
-                    <span className="text-[#f3ede7]">{result.director}</span>
-                    <span className="font-bold text-[#00fff7]">Country:</span>
-                    <span className="text-[#f3ede7]">{result.country}</span>
-                    <span className="font-bold text-[#00fff7]">Genre:</span>
-                    <span className="text-[#f3ede7]">{result.genre}</span>
-                    <span className="font-bold text-[#00fff7]">Budget:</span>
-                    <span className="text-[#f3ede7]">{result.budget}</span>
-                    <span className="font-bold text-[#00fff7]">Where to watch:</span>
-                    <span className="text-[#f3ede7]">{result.watch_info}</span>
+    <>
+      <Head>
+        <title>Puddy Pictures</title>
+      </Head>
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#181c2b] to-[#2a1a3a] text-[#eaf6fb] font-retro">
+        <nav className="w-full flex items-center justify-between px-8 py-4 bg-[#23243a]/90 shadow-lg z-10 border-b-4 border-[#00fff7]">
+          <div className="flex items-center gap-3">
+            <img src="/globe.svg" alt="Puddy Pictures Logo" className="h-10 w-10 animate-spin-slow" />
+            <span className="text-3xl font-extrabold tracking-tight text-[#00fff7] font-retro italic" style={{letterSpacing:'-1px'}}>Puddy Pictures</span>
+          </div>
+          <div className="flex gap-8 text-lg">
+            <a href="/" className="hover:text-[#ff00c8] transition font-semibold">Home</a>
+            <a href="/privacy" className="hover:text-[#ff00c8] transition font-semibold">Privacy</a>
+            <a href="/terms" className="hover:text-[#ff00c8] transition font-semibold">Terms</a>
+            <a href="/signup" className="hover:text-[#ff00c8] transition font-semibold">Sign Up</a>
+          </div>
+        </nav>
+        <section className="flex flex-col items-center justify-center flex-1 py-14 px-4 text-center">
+          <h1 className="text-6xl md:text-7xl font-extrabold mb-4 text-[#00fff7] font-retro italic tracking-tight" style={{letterSpacing:'-2px'}}>Discover Your Next Movie</h1>
+          <p className="text-2xl md:text-3xl text-[#eaf6fb]/90 mb-10 max-w-2xl mx-auto font-retro" style={{textShadow:'0 1px 0 #00fff7'}}>Let Puddy Pictures Picker surprise you with a film from around the world. Spin the wheels, get a random pick, and start watching!</p>
+          {/* Button Group for Picker/Club */}
+          <div className="flex justify-center mb-10 w-full max-w-2xl mx-auto gap-6">
+            <button
+              className={`px-8 py-4 text-2xl font-retro font-extrabold rounded-2xl border-4 transition-all duration-200 focus:outline-none shadow-lg ${activeTab === 'picker' ? 'bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] border-[#00fff7] scale-105' : 'bg-[#181c2b] text-[#a084ff] border-[#23243a] hover:bg-[#23243a] hover:text-[#00fff7]'}`}
+              onClick={() => setActiveTab('picker')}
+            >
+              🎲 Random Movie Picker
+            </button>
+            <button
+              className={`px-8 py-4 text-2xl font-retro font-extrabold rounded-2xl border-4 transition-all duration-200 focus:outline-none shadow-lg ${activeTab === 'club' ? 'bg-gradient-to-r from-[#ff00c8] to-[#00fff7] text-[#23243a] border-[#ff00c8] scale-105' : 'bg-[#181c2b] text-[#a084ff] border-[#23243a] hover:bg-[#23243a] hover:text-[#ff00c8]'}`}
+              onClick={() => setActiveTab('club')}
+            >
+              🌟 Weekly Movie Club Pick
+            </button>
+          </div>
+          {/* Button Content */}
+          {activeTab === 'picker' && (
+            <div className="w-full">
+              {/* Picker UI (was previously here) */}
+              {!showResult && (
+                <div className="w-full max-w-2xl mx-auto bg-[#23243a]/95 rounded-3xl shadow-2xl border-4 border-[#00fff7] p-10 flex flex-col items-center gap-8 animate-glow">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+                    {order.map((type) => (
+                      <div key={type} className="flex flex-col items-start w-full">
+                        <label className="text-lg mb-2 font-bold text-[#00fff7] font-retro uppercase tracking-wider">{type.charAt(0).toUpperCase() + type.slice(1)}</label>
+                        {/* Dropdown removed, replaced with static text */}
+                        <div className="text-lg p-3 rounded-xl border-2 border-[#00fff7] bg-[#1a2233] text-[#f3ede7] w-full font-retro shadow-[0_2px_8px_#00fff733] select-none">
+                          {selections[type] || `Not selected`}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-6 w-full justify-center mt-4">
+                    <button
+                      className="text-2xl px-10 py-3 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-extrabold rounded-full shadow-lg hover:from-[#ff00c8] hover:to-[#00fff7] transition font-retro border-2 border-[#00fff7]"
+                      onClick={runSequence}
+                      disabled={spinning}
+                      style={{ opacity: spinning ? 0.6 : 1 }}
+                    >
+                      {spinning ? "Spinning..." : "Spin for Movie"}
+                    </button>
+                  </div>
+                  <div className="mt-4 text-xl text-[#00fff7] min-h-[40px] w-full text-center font-retro tracking-wider">
+                    {spinResults.map((r, i) => (
+                      <p key={i}>{r}</p>
+                    ))}
                   </div>
                 </div>
-                <button
-                  className="text-2xl px-10 py-3 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-extrabold rounded-full shadow-lg hover:from-[#ff00c8] hover:to-[#00fff7] transition mt-6 md:mt-0 md:absolute md:bottom-8 md:right-8 font-retro border-2 border-[#00fff7]"
-                  onClick={resetAll}
-                >
-                  Try Another
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-        {activeTab === 'club' && (
-          <div className="w-full">
-            <WeeklyMoviePublicHomePreloaded movie={weeklyMovie} reviews={weeklyReviews} loading={weeklyLoading} />
-          </div>
-        )}
-      </section>
-      <footer className="w-full bg-[#23243a]/95 border-t-4 border-[#00fff7] text-center py-4 text-lg text-[#00fff7] mt-auto font-retro">
-        <a href="/privacy" className="font-bold hover:underline mx-2">Privacy Policy</a> |
-        <a href="/terms" className="font-bold hover:underline mx-2">Terms</a> |
-        <a href="/signup" className="font-bold hover:underline mx-2">Sign Up</a>
-        <span className="mx-2">|</span>
-        <a href="/weekly-movie-page" className="mx-2" style={{ fontSize: '0.95em', opacity: 0.5, textDecoration: 'underline' }}>Admin</a>
-      </footer>
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=IBM+Plex+Sans:wght@400;700&display=swap');
-        .font-retro {
-          font-family: 'Orbitron', 'IBM Plex Sans', Arial, sans-serif;
-        }
-        .animate-glow {
-          box-shadow: 0 0 16px 4px #00fff7, 0 0 32px 8px #ff00c8;
-          animation: glowPulse 2.5s infinite alternate;
-        }
-        @keyframes glowPulse {
-          0% { box-shadow: 0 0 16px 4px #00fff7, 0 0 32px 8px #ff00c8; }
-          100% { box-shadow: 0 0 32px 8px #ff00c8, 0 0 48px 16px #00fff7; }
-        }
-        .animate-spin-slow {
-          animation: spin 8s linear infinite;
-        }
-        @keyframes spin {
-          100% { transform: rotate(360deg); }
-        }
-        .animate-bounce {
-          animation: bounce 1.2s infinite alternate;
-        }
-        @keyframes bounce {
-          0% { transform: translateY(0); }
-          100% { transform: translateY(-10px); }
-        }
-        .animate-confetti {
-          background: repeating-linear-gradient(90deg, #00fff7 0 10px, #ff00c8 10px 20px, #3a7bff 20px 30px, #a084ff 30px 40px);
-          background-size: 80px 60px;
-          animation: confettiMove 1.5s linear infinite;
-        }
-        @keyframes confettiMove {
-          0% { background-position-x: 0; }
-          100% { background-position-x: 80px; }
-        }
-        .tab-active {
-          box-shadow: 0 0 16px 4px #00fff7, 0 0 32px 8px #ff00c8;
-        }
-      `}</style>
-    </div>
+              )}
+              {showResult && result && (
+                <div className="w-full max-w-5xl mx-auto bg-[#23243a]/98 rounded-3xl shadow-2xl border-4 border-[#00fff7] p-12 flex flex-col md:flex-row gap-14 items-center mt-10 animate-fade-in min-h-[520px] min-w-[340px] md:min-h-[600px] md:min-w-[900px]">
+                  {/* Poster Area */}
+                  <div className="flex-[1.2] flex justify-center items-center">
+                    {result.poster_url && (
+                      <img
+                        src={result.poster_url}
+                        alt={result.title}
+                        className="rounded-2xl shadow-2xl max-w-[420px] max-h-[80vh] border-4 border-[#00fff7] bg-[#1a2233]"
+                        style={{boxShadow:'0 4px 32px #00fff7', width: '100%', height: 'auto', objectFit: 'cover'}} />
+                    )}
+                  </div>
+                  {/* Info Area */}
+                  <div className="flex-[2] flex flex-col justify-center items-start p-2 md:p-6 bg-[#23243a]/80 rounded-2xl border-2 border-[#00fff7] min-h-[420px] w-full">
+                    <h2 className="text-5xl mb-4 font-extrabold text-[#00fff7] font-retro italic tracking-tight" style={{letterSpacing:'-1px',textShadow:'0 1px 0 #fff, 2px 2px 0 #00fff7'}}>
+                      {result.title} <span className="text-3xl text-[#fffbe7] font-normal">({result.release_year})</span>
+                    </h2>
+                    <p className="mb-6 text-lg text-[#00fff7] font-bold">Description:<span className="text-[#f3ede7] font-normal ml-2">{result.description}</span></p>
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-lg w-full mb-4">
+                      <span className="font-bold text-[#00fff7]">Director:</span>
+                      <span className="text-[#f3ede7]">{result.director}</span>
+                      <span className="font-bold text-[#00fff7]">Country:</span>
+                      <span className="text-[#f3ede7]">{result.country}</span>
+                      <span className="font-bold text-[#00fff7]">Genre:</span>
+                      <span className="text-[#f3ede7]">{result.genre}</span>
+                      <span className="font-bold text-[#00fff7]">Budget:</span>
+                      <span className="text-[#f3ede7]">{result.budget}</span>
+                      <span className="font-bold text-[#00fff7]">Where to watch:</span>
+                      <span className="text-[#f3ede7]">{result.watch_info}</span>
+                    </div>
+                  </div>
+                  <button
+                    className="text-2xl px-10 py-3 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-extrabold rounded-full shadow-lg hover:from-[#ff00c8] hover:to-[#00fff7] transition mt-6 md:mt-0 md:absolute md:bottom-8 md:right-8 font-retro border-2 border-[#00fff7]"
+                    onClick={resetAll}
+                  >
+                    Try Another
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+          {activeTab === 'club' && (
+            <div className="w-full">
+              <WeeklyMoviePublicHomePreloaded movie={weeklyMovie} reviews={weeklyReviews} loading={weeklyLoading} />
+            </div>
+          )}
+        </section>
+        <footer className="w-full bg-[#23243a]/95 border-t-4 border-[#00fff7] text-center py-4 text-lg text-[#00fff7] mt-auto font-retro">
+          <a href="/privacy" className="font-bold hover:underline mx-2">Privacy Policy</a> |
+          <a href="/terms" className="font-bold hover:underline mx-2">Terms</a> |
+          <a href="/signup" className="font-bold hover:underline mx-2">Sign Up</a>
+          <span className="mx-2">|</span>
+          <a href="/weekly-movie-page" className="mx-2" style={{ fontSize: '0.95em', opacity: 0.5, textDecoration: 'underline' }}>Admin</a>
+        </footer>
+        <style jsx global>{`
+          @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=IBM+Plex+Sans:wght@400;700&display=swap');
+          .font-retro {
+            font-family: 'Orbitron', 'IBM Plex Sans', Arial, sans-serif;
+          }
+          .animate-glow {
+            box-shadow: 0 0 16px 4px #00fff7, 0 0 32px 8px #ff00c8;
+            animation: glowPulse 2.5s infinite alternate;
+          }
+          @keyframes glowPulse {
+            0% { box-shadow: 0 0 16px 4px #00fff7, 0 0 32px 8px #ff00c8; }
+            100% { box-shadow: 0 0 32px 8px #ff00c8, 0 0 48px 16px #00fff7; }
+          }
+          .animate-spin-slow {
+            animation: spin 8s linear infinite;
+          }
+          @keyframes spin {
+            100% { transform: rotate(360deg); }
+          }
+          .animate-bounce {
+            animation: bounce 1.2s infinite alternate;
+          }
+          @keyframes bounce {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-10px); }
+          }
+          .animate-confetti {
+            background: repeating-linear-gradient(90deg, #00fff7 0 10px, #ff00c8 10px 20px, #3a7bff 20px 30px, #a084ff 30px 40px);
+            background-size: 80px 60px;
+            animation: confettiMove 1.5s linear infinite;
+          }
+          @keyframes confettiMove {
+            0% { background-position-x: 0; }
+            100% { background-position-x: 80px; }
+          }
+          .tab-active {
+            box-shadow: 0 0 16px 4px #00fff7, 0 0 32px 8px #ff00c8;
+          }
+        `}</style>
+      </div>
+    </>
   );
 }

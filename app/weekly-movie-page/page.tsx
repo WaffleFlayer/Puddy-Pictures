@@ -1,6 +1,7 @@
 // Admin/automation page to view and set the weekly movie
 'use client';
 import { useState, useEffect } from 'react';
+import Head from 'next/head';
 
 type PickerType = "region" | "genre" | "decade" | "budget";
 type Selections = Partial<Record<PickerType, string>>;
@@ -115,6 +116,18 @@ function WeeklyMoviePublic({ movie }: { movie: any }) {
           </ul>
         }
       </div>
+    </div>
+  );
+}
+
+function WeeklyMovieBox({ movie }: { movie: any }) {
+  if (!movie || !movie.title) return null;
+  return (
+    <div className="p-8 bg-[#23243a] border-4 border-[#00fff7] rounded-3xl max-w-2xl w-full mx-auto my-8">
+      <div className="text-3xl font-bold text-[#ff00c8] mb-2">{movie.title} <span className="text-lg text-[#fffbe7] font-normal">({movie.release_year})</span></div>
+      <div className="mb-2 text-[#eaf6fb]">{movie.description}</div>
+      <div className="mb-2 text-[#a084ff]">Review Code: <span className="font-mono">{movie.code}</span></div>
+      <div className="mb-2 text-[#00fff7]">Reply to the club SMS with this code at the start of your review!</div>
     </div>
   );
 }
@@ -315,103 +328,142 @@ export default function WeeklyMovieAdmin() {
   };
 
   return (
-    <div className="min-h-screen bg-[#181c2b] text-[#eaf6fb] p-8 font-retro">
-      {/* Navigation Bar */}
-      <nav className="w-full flex items-center justify-between px-8 py-4 bg-[#23243a]/90 shadow-lg z-10 border-b-4 border-[#00fff7] mb-8">
-        <div className="flex items-center gap-3">
-          <img src="/globe.svg" alt="Puddy Pictures Logo" className="h-10 w-10 animate-spin-slow" />
-          <span className="text-3xl font-extrabold tracking-tight text-[#00fff7] font-retro italic" style={{letterSpacing:'-1px'}}>Puddy Pictures</span>
+    <>
+      <Head>
+        <title>Puddy Pictures</title>
+      </Head>
+      <div className="min-h-screen bg-[#181c2b] text-[#eaf6fb] p-8 font-retro">
+        {/* Navigation Bar */}
+        <nav className="w-full flex items-center justify-between px-8 py-4 bg-[#23243a]/90 shadow-lg z-10 border-b-4 border-[#00fff7] mb-8">
+          <div className="flex items-center gap-3">
+            <img src="/globe.svg" alt="Puddy Pictures Logo" className="h-10 w-10 animate-spin-slow" />
+            <span className="text-3xl font-extrabold tracking-tight text-[#00fff7] font-retro italic" style={{letterSpacing:'-1px'}}>Puddy Pictures</span>
+          </div>
+          <div className="flex gap-8 text-lg">
+            <a href="/" className="hover:text-[#ff00c8] transition font-semibold">Home</a>
+            <a href="/privacy" className="hover:text-[#ff00c8] transition font-semibold">Privacy</a>
+            <a href="/terms" className="hover:text-[#ff00c8] transition font-semibold">Terms</a>
+            <a href="/signup" className="hover:text-[#ff00c8] transition font-semibold">Sign Up</a>
+            <a href="/admin-subscribers" className="hover:text-[#ff00c8] transition font-semibold">Subscribers</a>
+          </div>
+        </nav>
+        <h1 className="text-4xl font-extrabold text-[#00fff7] mb-6">Weekly Movie Admin</h1>
+        {/* Wheel UI */}
+        <div className="w-full max-w-2xl mx-auto bg-[#23243a]/95 rounded-3xl shadow-2xl border-4 border-[#00fff7] p-10 flex flex-col items-center gap-8 animate-glow">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+            {order.map((type) => (
+              <div key={type} className="flex flex-col items-start w-full">
+                <label className="text-lg mb-2 font-bold text-[#00fff7] font-retro uppercase tracking-wider">{type.charAt(0).toUpperCase() + type.slice(1)}</label>
+                <select
+                  className="text-lg p-3 rounded-xl border-2 border-[#00fff7] bg-[#1a2233] text-[#f3ede7] w-full font-retro shadow-[0_2px_8px_#00fff733]"
+                  value={selections[type] || ""}
+                  onChange={(e) => setSelections((prev) => ({ ...prev, [type]: e.target.value }))}
+                >
+                  <option value="">Select {type}</option>
+                  {wheels[type].map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-6 w-full justify-center mt-4">
+            <button
+              className="text-2xl px-10 py-3 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-extrabold rounded-full shadow-lg hover:from-[#ff00c8] hover:to-[#00fff7] transition font-retro border-2 border-[#00fff7]"
+              onClick={runSequence}
+              disabled={spinning}
+              style={{ opacity: spinning ? 0.6 : 1 }}
+            >
+              {spinning ? "Spinning..." : "Spin for Weekly Movie"}
+            </button>
+          </div>
+          <div className="mt-4 text-xl text-[#00fff7] min-h-[40px] w-full text-center font-retro tracking-wider">
+            {spinResults.map((r, i) => (
+              <p key={i}>{r}</p>
+            ))}
+          </div>
         </div>
-        <div className="flex gap-8 text-lg">
-          <a href="/" className="hover:text-[#ff00c8] transition font-semibold">Home</a>
-          <a href="/privacy" className="hover:text-[#ff00c8] transition font-semibold">Privacy</a>
-          <a href="/terms" className="hover:text-[#ff00c8] transition font-semibold">Terms</a>
-          <a href="/signup" className="hover:text-[#ff00c8] transition font-semibold">Sign Up</a>
-          <a href="/admin-subscribers" className="hover:text-[#ff00c8] transition font-semibold">Subscribers</a>
-        </div>
-      </nav>
-      <h1 className="text-4xl font-extrabold text-[#00fff7] mb-6">Weekly Movie Admin</h1>
-      {/* Wheel UI */}
-      <div className="w-full max-w-2xl mx-auto bg-[#23243a]/95 rounded-3xl shadow-2xl border-4 border-[#00fff7] p-10 flex flex-col items-center gap-8 animate-glow">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
-          {order.map((type) => (
-            <div key={type} className="flex flex-col items-start w-full">
-              <label className="text-lg mb-2 font-bold text-[#00fff7] font-retro uppercase tracking-wider">{type.charAt(0).toUpperCase() + type.slice(1)}</label>
-              <select
-                className="text-lg p-3 rounded-xl border-2 border-[#00fff7] bg-[#1a2233] text-[#f3ede7] w-full font-retro shadow-[0_2px_8px_#00fff733]"
-                value={selections[type] || ""}
-                onChange={(e) => setSelections((prev) => ({ ...prev, [type]: e.target.value }))}
-              >
-                <option value="">Select {type}</option>
-                {wheels[type].map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
+        {/* Result Card and SMS Preview */}
+        {result && (
+          <div className="w-full max-w-3xl mx-auto bg-[#23243a]/98 rounded-3xl shadow-2xl border-4 border-[#00fff7] p-12 flex flex-col gap-8 items-center mt-10 animate-fade-in min-h-[420px]">
+            {result.poster_url && (
+              <img
+                src={result.poster_url}
+                alt={result.title}
+                className="rounded-2xl shadow-2xl max-w-[420px] max-h-[80vh] border-4 border-[#00fff7] bg-[#1a2233] mb-4"
+                style={{boxShadow:'0 4px 32px #00fff7', width: '100%', height: 'auto', objectFit: 'cover'}} />
+            )}
+            {/* AI Intro Display removed from public view */}
+            <h2 className="text-4xl mb-2 font-extrabold text-[#00fff7] font-retro italic tracking-tight" style={{letterSpacing:'-1px',textShadow:'0 1px 0 #fff, 2px 2px 0 #00fff7'}}>
+              {result.title} <span className="text-2xl text-[#fffbe7] font-normal">({result.release_year})</span>
+            </h2>
+            <p className="mb-2 text-lg text-[#00fff7] font-bold">Description:<span className="text-[#f3ede7] font-normal ml-2">{result.description}</span></p>
+            <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-lg w-full mb-4">
+              <span className="font-bold text-[#00fff7]">Director:</span>
+              <span className="text-[#f3ede7]">{result.director}</span>
+              <span className="font-bold text-[#00fff7]">Country:</span>
+              <span className="text-[#f3ede7]">{result.country}</span>
+              <span className="font-bold text-[#00fff7]">Genre:</span>
+              <span className="text-[#f3ede7]">{result.genre}</span>
+              <span className="font-bold text-[#00fff7]">Budget:</span>
+              <span className="text-[#f3ede7]">{result.budget}</span>
+              <span className="font-bold text-[#00fff7]">Where to watch:</span>
+              <span className="text-[#f3ede7]">{result.watch_info}</span>
             </div>
-          ))}
-        </div>
-        <div className="flex gap-6 w-full justify-center mt-4">
-          <button
-            className="text-2xl px-10 py-3 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-extrabold rounded-full shadow-lg hover:from-[#ff00c8] hover:to-[#00fff7] transition font-retro border-2 border-[#00fff7]"
-            onClick={runSequence}
-            disabled={spinning}
-            style={{ opacity: spinning ? 0.6 : 1 }}
-          >
-            {spinning ? "Spinning..." : "Spin for Weekly Movie"}
-          </button>
-        </div>
-        <div className="mt-4 text-xl text-[#00fff7] min-h-[40px] w-full text-center font-retro tracking-wider">
-          {spinResults.map((r, i) => (
-            <p key={i}>{r}</p>
-          ))}
-        </div>
+            <div className="mt-4 p-3 rounded-xl bg-[#181c2b] border-2 border-[#00fff7] text-[#00fff7] font-mono text-lg select-all">
+              <span className="font-bold">Review Code:</span> {result.code}
+            </div>
+            <div className="mt-4 p-3 rounded-xl bg-[#181c2b] border-2 border-[#ff00c8] text-[#ff00c8] font-mono text-lg w-full">
+              <span className="font-bold">SMS Preview:</span>
+              <div className="text-[#eaf6fb] mt-2 whitespace-pre-line">{getSMSPreview(result, intro)}</div>
+            </div>
+            <button
+              className="text-2xl px-10 py-3 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-extrabold rounded-full shadow-lg hover:from-[#ff00c8] hover:to-[#00fff7] transition font-retro border-2 border-[#00fff7] mt-4"
+              onClick={saveWeeklyMovie}
+              disabled={saving}
+            >
+              {saving ? "Saving..." : "Set as Weekly Movie"}
+            </button>
+            {saveStatus && <div className="mt-2 text-lg text-[#00fff7]">{saveStatus}</div>}
+          </div>
+        )}
+        {/* Public preview for admin - replaced with home page style */}
+        {movie && movie.title && (
+          <div className="w-full max-w-5xl mx-auto my-16 p-12 bg-[#23243a] border-4 border-[#00fff7] rounded-3xl flex flex-col md:flex-row gap-14 items-center animate-fade-in min-h-[520px] min-w-[340px] md:min-h-[600px] md:min-w-[900px]">
+            {/* Poster Area */}
+            <div className="flex-[1.2] flex justify-center items-center">
+              {movie.poster_url && (
+                <img
+                  src={movie.poster_url}
+                  alt={movie.title}
+                  className="rounded-2xl shadow-2xl max-w-[420px] max-h-[80vh] border-4 border-[#00fff7] bg-[#1a2233]"
+                  style={{boxShadow:'0 4px 32px #00fff7', width: '100%', height: 'auto', objectFit: 'cover'}} />
+              )}
+            </div>
+            {/* Info Area */}
+            <div className="flex-[2] flex flex-col justify-center items-start p-2 md:p-6 bg-[#23243a]/80 rounded-2xl border-2 border-[#00fff7] min-h-[420px] w-full">
+              <h2 className="text-5xl mb-4 font-extrabold text-[#00fff7] font-retro italic tracking-tight" style={{letterSpacing:'-1px',textShadow:'0 1px 0 #fff, 2px 2px 0 #00fff7'}}>
+                {movie.title} <span className="text-3xl text-[#fffbe7] font-normal">({movie.release_year})</span>
+              </h2>
+              <p className="mb-6 text-lg text-[#00fff7] font-bold">Description:<span className="text-[#f3ede7] font-normal ml-2">{movie.description}</span></p>
+              <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-lg w-full mb-4">
+                <span className="font-bold text-[#00fff7]">Director:</span>
+                <span className="text-[#f3ede7]">{movie.director}</span>
+                <span className="font-bold text-[#00fff7]">Country:</span>
+                <span className="text-[#f3ede7]">{movie.country}</span>
+                <span className="font-bold text-[#00fff7]">Genre:</span>
+                <span className="text-[#f3ede7]">{movie.genre}</span>
+                <span className="font-bold text-[#00fff7]">Budget:</span>
+                <span className="text-[#f3ede7]">{movie.budget}</span>
+                <span className="font-bold text-[#00fff7]">Where to watch:</span>
+                <span className="text-[#f3ede7]">{movie.watch_info}</span>
+              </div>
+              <div className="mb-2 text-[#a084ff]">Review Code: <span className="font-mono">{movie.code}</span></div>
+              <div className="mb-2 text-[#00fff7]">Reply to the club SMS with this code at the start of your review!</div>
+            </div>
+          </div>
+        )}
       </div>
-      {/* Result Card and SMS Preview */}
-      {result && (
-        <div className="w-full max-w-3xl mx-auto bg-[#23243a]/98 rounded-3xl shadow-2xl border-4 border-[#00fff7] p-12 flex flex-col gap-8 items-center mt-10 animate-fade-in min-h-[420px]">
-          {result.poster_url && (
-            <img
-              src={result.poster_url}
-              alt={result.title}
-              className="rounded-2xl shadow-2xl max-w-[420px] max-h-[80vh] border-4 border-[#00fff7] bg-[#1a2233] mb-4"
-              style={{boxShadow:'0 4px 32px #00fff7', width: '100%', height: 'auto', objectFit: 'cover'}} />
-          )}
-          {/* AI Intro Display removed from public view */}
-          <h2 className="text-4xl mb-2 font-extrabold text-[#00fff7] font-retro italic tracking-tight" style={{letterSpacing:'-1px',textShadow:'0 1px 0 #fff, 2px 2px 0 #00fff7'}}>
-            {result.title} <span className="text-2xl text-[#fffbe7] font-normal">({result.release_year})</span>
-          </h2>
-          <p className="mb-2 text-lg text-[#00fff7] font-bold">Description:<span className="text-[#f3ede7] font-normal ml-2">{result.description}</span></p>
-          <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-lg w-full mb-4">
-            <span className="font-bold text-[#00fff7]">Director:</span>
-            <span className="text-[#f3ede7]">{result.director}</span>
-            <span className="font-bold text-[#00fff7]">Country:</span>
-            <span className="text-[#f3ede7]">{result.country}</span>
-            <span className="font-bold text-[#00fff7]">Genre:</span>
-            <span className="text-[#f3ede7]">{result.genre}</span>
-            <span className="font-bold text-[#00fff7]">Budget:</span>
-            <span className="text-[#f3ede7]">{result.budget}</span>
-            <span className="font-bold text-[#00fff7]">Where to watch:</span>
-            <span className="text-[#f3ede7]">{result.watch_info}</span>
-          </div>
-          <div className="mt-4 p-3 rounded-xl bg-[#181c2b] border-2 border-[#00fff7] text-[#00fff7] font-mono text-lg select-all">
-            <span className="font-bold">Review Code:</span> {result.code}
-          </div>
-          <div className="mt-4 p-3 rounded-xl bg-[#181c2b] border-2 border-[#ff00c8] text-[#ff00c8] font-mono text-lg w-full">
-            <span className="font-bold">SMS Preview:</span>
-            <div className="text-[#eaf6fb] mt-2 whitespace-pre-line">{getSMSPreview(result, intro)}</div>
-          </div>
-          <button
-            className="text-2xl px-10 py-3 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-extrabold rounded-full shadow-lg hover:from-[#ff00c8] hover:to-[#00fff7] transition font-retro border-2 border-[#00fff7] mt-4"
-            onClick={saveWeeklyMovie}
-            disabled={saving}
-          >
-            {saving ? "Saving..." : "Set as Weekly Movie"}
-          </button>
-          {saveStatus && <div className="mt-2 text-lg text-[#00fff7]">{saveStatus}</div>}
-        </div>
-      )}
-      {/* Public preview for admin */}
-      <WeeklyMoviePublic movie={movie} />
-    </div>
+    </>
   );
 }

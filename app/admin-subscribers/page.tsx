@@ -1,6 +1,7 @@
 // Admin Subscribers Page
 'use client';
 import { useEffect, useState } from 'react';
+import Head from 'next/head';
 
 interface Registration {
   name: string;
@@ -126,59 +127,64 @@ export default function AdminSubscribers() {
   }
 
   return (
-    <div className="min-h-screen bg-[#181c2b] text-[#eaf6fb] p-8 font-retro flex flex-col items-center">
-      <nav className="w-full flex items-center justify-between px-8 py-4 bg-[#23243a]/90 shadow-lg z-10 border-b-4 border-[#00fff7] mb-8">
-        <div className="flex items-center gap-3">
-          <img src="/globe.svg" alt="Puddy Pictures Logo" className="h-10 w-10 animate-spin-slow" />
-          <span className="text-3xl font-extrabold tracking-tight text-[#00fff7] font-retro italic" style={{letterSpacing:'-1px'}}>Puddy Pictures</span>
-        </div>
-        <div className="flex gap-8 text-lg">
-          <a href="/" className="hover:text-[#ff00c8] transition font-semibold">Home</a>
-          <a href="/privacy" className="hover:text-[#ff00c8] transition font-semibold">Privacy</a>
-          <a href="/terms" className="hover:text-[#ff00c8] transition font-semibold">Terms</a>
-          <a href="/signup" className="hover:text-[#ff00c8] transition font-semibold">Sign Up</a>
-          <a href="/weekly-movie-page" className="hover:text-[#ff00c8] transition font-semibold">Weekly Movie Roll Admin</a>
-        </div>
-      </nav>
-      <h1 className="text-4xl font-extrabold text-[#00fff7] mb-6">Movie Club Subscribers</h1>
-      {loading && <div>Loading...</div>}
-      {error && <div className="text-[#ff00c8]">{error}</div>}
-      {!loading && !error && (
-        <table className="w-full max-w-2xl bg-[#23243a] border-4 border-[#00fff7] rounded-2xl shadow-xl">
-          <thead>
-            <tr className="text-left text-[#00fff7] border-b-2 border-[#00fff7]">
-              <th className="p-3">Name</th>
-              <th className="p-3">Display Name</th>
-              <th className="p-3">Phone</th>
-              <th className="p-3">Consent</th>
-              <th className="p-3">Date</th>
-              <th className="p-3">Status</th>
-              <th className="p-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {subs.map((s, i) => (
-              <tr key={i} className={`border-b border-[#23243a] hover:bg-[#1a2233] whitespace-nowrap ${s.unsubscribed ? 'opacity-50' : ''}`}>
-                <td className="p-2 overflow-hidden text-ellipsis max-w-[180px]">{s.name}</td>
-                <td className="p-2 overflow-hidden text-ellipsis max-w-[140px]">{s.displayName || ''}</td>
-                <td className="p-2 overflow-hidden text-ellipsis max-w-[140px]">{s.phone}</td>
-                <td className="p-2">{s.consent ? 'Yes' : 'No'}</td>
-                <td className="p-2 overflow-hidden text-ellipsis max-w-[180px]">{new Date(s.date).toLocaleString()}</td>
-                <td className="p-2">{s.unsubscribed ? `Unsubscribed${s.unsubscribedDate ? ' (' + new Date(s.unsubscribedDate).toLocaleDateString() + ')' : ''}` : 'Active'}</td>
-                <td className="p-2 text-right">
-                  <button
-                    className="px-3 py-1 bg-[#ff00c8] text-white rounded hover:bg-[#a084ff] text-xs font-bold transition"
-                    onClick={() => handleDelete(s.phone)}
-                    disabled={s.unsubscribed}
-                  >
-                    Remove
-                  </button>
-                </td>
+    <>
+      <Head>
+        <title>Puddy Pictures</title>
+      </Head>
+      <div className="min-h-screen bg-[#181c2b] text-[#eaf6fb] p-8 font-retro flex flex-col items-center">
+        <nav className="w-full flex items-center justify-between px-8 py-4 bg-[#23243a]/90 shadow-lg z-10 border-b-4 border-[#00fff7] mb-8">
+          <div className="flex items-center gap-3">
+            <img src="/globe.svg" alt="Puddy Pictures Logo" className="h-10 w-10 animate-spin-slow" />
+            <span className="text-3xl font-extrabold tracking-tight text-[#00fff7] font-retro italic" style={{letterSpacing:'-1px'}}>Puddy Pictures</span>
+          </div>
+          <div className="flex gap-8 text-lg">
+            <a href="/" className="hover:text-[#ff00c8] transition font-semibold">Home</a>
+            <a href="/privacy" className="hover:text-[#ff00c8] transition font-semibold">Privacy</a>
+            <a href="/terms" className="hover:text-[#ff00c8] transition font-semibold">Terms</a>
+            <a href="/signup" className="hover:text-[#ff00c8] transition font-semibold">Sign Up</a>
+            <a href="/weekly-movie-page" className="hover:text-[#ff00c8] transition font-semibold">Weekly Movie Roll Admin</a>
+          </div>
+        </nav>
+        <h1 className="text-4xl font-extrabold text-[#00fff7] mb-6">Movie Club Subscribers</h1>
+        {loading && <div>Loading...</div>}
+        {error && <div className="text-[#ff00c8]">{error}</div>}
+        {!loading && !error && (
+          <table className="w-full max-w-2xl bg-[#23243a] border-4 border-[#00fff7] rounded-2xl shadow-xl">
+            <thead>
+              <tr className="text-left text-[#00fff7] border-b-2 border-[#00fff7]">
+                <th className="p-3">Name</th>
+                <th className="p-3">Display Name</th>
+                <th className="p-3">Phone</th>
+                <th className="p-3">Consent</th>
+                <th className="p-3">Date</th>
+                <th className="p-3">Status</th>
+                <th className="p-3 text-right">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </div>
+            </thead>
+            <tbody>
+              {subs.map((s, i) => (
+                <tr key={i} className={`border-b border-[#23243a] hover:bg-[#1a2233] whitespace-nowrap ${s.unsubscribed ? 'opacity-50' : ''}`}>
+                  <td className="p-2 overflow-hidden text-ellipsis max-w-[180px]">{s.name}</td>
+                  <td className="p-2 overflow-hidden text-ellipsis max-w-[140px]">{s.displayName || ''}</td>
+                  <td className="p-2 overflow-hidden text-ellipsis max-w-[140px]">{s.phone}</td>
+                  <td className="p-2">{s.consent ? 'Yes' : 'No'}</td>
+                  <td className="p-2 overflow-hidden text-ellipsis max-w-[180px]">{new Date(s.date).toLocaleString()}</td>
+                  <td className="p-2">{s.unsubscribed ? `Unsubscribed${s.unsubscribedDate ? ' (' + new Date(s.unsubscribedDate).toLocaleDateString() + ')' : ''}` : 'Active'}</td>
+                  <td className="p-2 text-right">
+                    <button
+                      className="px-3 py-1 bg-[#ff00c8] text-white rounded hover:bg-[#a084ff] text-xs font-bold transition"
+                      onClick={() => handleDelete(s.phone)}
+                      disabled={s.unsubscribed}
+                    >
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </>
   );
 }

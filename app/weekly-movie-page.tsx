@@ -1,6 +1,7 @@
 // Admin/automation page to view and set the weekly movie
 'use client';
 import { useState, useEffect } from 'react';
+import Head from 'next/head';
 
 function WeeklyMoviePublic({ movie }: { movie: any }) {
   const [reviews, setReviews] = useState<any[]>([]);
@@ -122,46 +123,51 @@ export default function WeeklyMovieAdmin() {
   const publicUrl = typeof window !== 'undefined' ? `${window.location.origin}/weekly-movie` : '';
 
   return (
-    <div className="min-h-screen bg-[#181c2b] text-[#eaf6fb] p-8 font-retro">
-      <h1 className="text-4xl font-extrabold text-[#00fff7] mb-6">Weekly Movie Admin</h1>
-      <button
-        type="button"
-        className="mb-6 px-6 py-2 bg-gradient-to-r from-[#ff00c8] to-[#00fff7] text-[#23243a] font-bold rounded shadow border-2 border-[#ff00c8] disabled:opacity-60"
-        onClick={handleRollWeeklyMovie}
-        disabled={rolling}
-      >
-        {rolling ? 'Rolling...' : 'Roll Weekly Movie'}
-      </button>
-      {movie && movie.title && (
-        <div className="mb-8 p-6 bg-[#23243a] border-2 border-[#00fff7] rounded-xl">
-          <h2 className="text-2xl font-bold text-[#ff00c8]">Current Weekly Movie</h2>
-          <div className="mt-2 text-lg">{movie.title} ({movie.release_year})</div>
-          {/* AI Intro Display */}
-          {/* Removed AI intro from public view */}
-          <div className="text-[#a084ff]">Review Code: {movie.code}</div>
-          <div className="mt-2">
-            <span className="font-bold text-[#00fff7]">Public Link: </span>
-            <a href="/weekly-movie" className="underline text-[#00fff7] hover:text-[#ff00c8]">/weekly-movie</a>
-            <button className="ml-2 px-2 py-1 bg-[#00fff7] text-[#23243a] rounded font-bold" onClick={() => {navigator.clipboard.writeText(publicUrl);}}>Copy Link</button>
+    <>
+      <Head>
+        <title>Puddy Pictures</title>
+      </Head>
+      <div className="min-h-screen bg-[#181c2b] text-[#eaf6fb] p-8 font-retro">
+        <h1 className="text-4xl font-extrabold text-[#00fff7] mb-6">Weekly Movie Admin</h1>
+        <button
+          type="button"
+          className="mb-6 px-6 py-2 bg-gradient-to-r from-[#ff00c8] to-[#00fff7] text-[#23243a] font-bold rounded shadow border-2 border-[#ff00c8] disabled:opacity-60"
+          onClick={handleRollWeeklyMovie}
+          disabled={rolling}
+        >
+          {rolling ? 'Rolling...' : 'Roll Weekly Movie'}
+        </button>
+        {movie && movie.title && (
+          <div className="mb-8 p-6 bg-[#23243a] border-2 border-[#00fff7] rounded-xl">
+            <h2 className="text-2xl font-bold text-[#ff00c8]">Current Weekly Movie</h2>
+            <div className="mt-2 text-lg">{movie.title} ({movie.release_year})</div>
+            {/* AI Intro Display */}
+            {/* Removed AI intro from public view */}
+            <div className="text-[#a084ff]">Review Code: {movie.code}</div>
+            <div className="mt-2">
+              <span className="font-bold text-[#00fff7]">Public Link: </span>
+              <a href="/weekly-movie" className="underline text-[#00fff7] hover:text-[#ff00c8]">/weekly-movie</a>
+              <button className="ml-2 px-2 py-1 bg-[#00fff7] text-[#23243a] rounded font-bold" onClick={() => {navigator.clipboard.writeText(publicUrl);}}>Copy Link</button>
+            </div>
           </div>
-        </div>
-      )}
-      <form onSubmit={handleSubmit} className="space-y-4 max-w-xl">
-        <input name="title" placeholder="Title" className="w-full p-2 rounded bg-[#1a2233] border border-[#00fff7] text-[#eaf6fb]" onChange={handleChange} value={form.title || ''} required />
-        <input name="release_year" placeholder="Release Year" className="w-full p-2 rounded bg-[#1a2233] border border-[#00fff7] text-[#eaf6fb]" onChange={handleChange} value={form.release_year || ''} required />
-        <input name="code" placeholder="Review Code (6 chars)" className="w-full p-2 rounded bg-[#1a2233] border border-[#00fff7] text-[#eaf6fb]" maxLength={6} minLength={6} onChange={handleChange} value={form.code || ''} required />
-        <input name="director" placeholder="Director" className="w-full p-2 rounded bg-[#1a2233] border border-[#00fff7] text-[#eaf6fb]" onChange={handleChange} value={form.director || ''} />
-        <input name="country" placeholder="Country" className="w-full p-2 rounded bg-[#1a2233] border border-[#00fff7] text-[#eaf6fb]" onChange={handleChange} value={form.country || ''} />
-        <input name="genre" placeholder="Genre" className="w-full p-2 rounded bg-[#1a2233] border border-[#00fff7] text-[#eaf6fb]" onChange={handleChange} value={form.genre || ''} />
-        <input name="budget" placeholder="Budget" className="w-full p-2 rounded bg-[#1a2233] border border-[#00fff7] text-[#eaf6fb]" onChange={handleChange} value={form.budget || ''} />
-        <input name="watch_info" placeholder="Where to Watch" className="w-full p-2 rounded bg-[#1a2233] border border-[#00fff7] text-[#eaf6fb]" onChange={handleChange} value={form.watch_info || ''} />
-        <input name="poster_url" placeholder="Poster URL" className="w-full p-2 rounded bg-[#1a2233] border border-[#00fff7] text-[#eaf6fb]" onChange={handleChange} value={form.poster_url || ''} />
-        <textarea name="description" placeholder="Description" className="w-full p-2 rounded bg-[#1a2233] border border-[#00fff7] text-[#eaf6fb]" onChange={handleChange} value={form.description || ''} />
-        <button type="submit" className="px-6 py-2 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-bold rounded shadow border-2 border-[#00fff7]">Set Weekly Movie</button>
-      </form>
-      {status && <div className="mt-4 text-lg text-[#00fff7]">{status}</div>}
-      {/* Public preview for admin */}
-      <WeeklyMoviePublic movie={movie} />
-    </div>
+        )}
+        <form onSubmit={handleSubmit} className="space-y-4 max-w-xl">
+          <input name="title" placeholder="Title" className="w-full p-2 rounded bg-[#1a2233] border border-[#00fff7] text-[#eaf6fb]" onChange={handleChange} value={form.title || ''} required />
+          <input name="release_year" placeholder="Release Year" className="w-full p-2 rounded bg-[#1a2233] border border-[#00fff7] text-[#eaf6fb]" onChange={handleChange} value={form.release_year || ''} required />
+          <input name="code" placeholder="Review Code (6 chars)" className="w-full p-2 rounded bg-[#1a2233] border border-[#00fff7] text-[#eaf6fb]" maxLength={6} minLength={6} onChange={handleChange} value={form.code || ''} required />
+          <input name="director" placeholder="Director" className="w-full p-2 rounded bg-[#1a2233] border border-[#00fff7] text-[#eaf6fb]" onChange={handleChange} value={form.director || ''} />
+          <input name="country" placeholder="Country" className="w-full p-2 rounded bg-[#1a2233] border border-[#00fff7] text-[#eaf6fb]" onChange={handleChange} value={form.country || ''} />
+          <input name="genre" placeholder="Genre" className="w-full p-2 rounded bg-[#1a2233] border border-[#00fff7] text-[#eaf6fb]" onChange={handleChange} value={form.genre || ''} />
+          <input name="budget" placeholder="Budget" className="w-full p-2 rounded bg-[#1a2233] border border-[#00fff7] text-[#eaf6fb]" onChange={handleChange} value={form.budget || ''} />
+          <input name="watch_info" placeholder="Where to Watch" className="w-full p-2 rounded bg-[#1a2233] border border-[#00fff7] text-[#eaf6fb]" onChange={handleChange} value={form.watch_info || ''} />
+          <input name="poster_url" placeholder="Poster URL" className="w-full p-2 rounded bg-[#1a2233] border border-[#00fff7] text-[#eaf6fb]" onChange={handleChange} value={form.poster_url || ''} />
+          <textarea name="description" placeholder="Description" className="w-full p-2 rounded bg-[#1a2233] border border-[#00fff7] text-[#eaf6fb]" onChange={handleChange} value={form.description || ''} />
+          <button type="submit" className="px-6 py-2 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-bold rounded shadow border-2 border-[#00fff7]">Set Weekly Movie</button>
+        </form>
+        {status && <div className="mt-4 text-lg text-[#00fff7]">{status}</div>}
+        {/* Public preview for admin */}
+        <WeeklyMoviePublic movie={movie} />
+      </div>
+    </>
   );
 }
