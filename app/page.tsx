@@ -355,9 +355,9 @@ export default function Home() {
           {activeTab === 'picker' && (
             <div className="w-full">
               {/* Filter Controls */}
-              <div className="w-full max-w-2xl mx-auto mb-8 p-6 bg-[#23243a] border-2 border-[#00fff7] rounded-2xl">
+              <div className="w-full max-w-5xl mx-auto mb-8 p-6 bg-[#23243a] border-2 border-[#00fff7] rounded-2xl overflow-x-auto">
                 <h3 className="text-2xl font-bold text-[#00fff7] mb-4 font-retro">Filter Randomization Pool</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-8 min-w-[700px]">
                   {order.map((type) => (
                     <div key={type} className="bg-[#1a2233] rounded-xl p-4 border-2 border-[#23243a] flex flex-col mb-2">
                       <div className="font-bold text-[#00fff7] mb-3 uppercase tracking-wider text-lg text-center">{type.charAt(0).toUpperCase() + type.slice(1)}</div>
@@ -389,12 +389,11 @@ export default function Home() {
               </div>
               {/* Picker UI (was previously here) */}
               {!showResult && (
-                <div className="w-full max-w-2xl mx-auto bg-[#23243a]/95 rounded-3xl shadow-2xl border-4 border-[#00fff7] p-10 flex flex-col items-center gap-8 animate-glow">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+                <div className="w-full max-w-5xl mx-auto bg-[#23243a]/95 rounded-3xl shadow-2xl border-4 border-[#00fff7] p-10 flex flex-col items-center gap-8 animate-glow overflow-x-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-8 w-full min-w-[700px]">
                     {order.map((type) => (
                       <div key={type} className="flex flex-col items-start w-full">
                         <label className="text-lg mb-2 font-bold text-[#00fff7] font-retro uppercase tracking-wider">{type.charAt(0).toUpperCase() + type.slice(1)}</label>
-                        {/* Dropdown removed, replaced with static text */}
                         <div className="text-lg p-3 rounded-xl border-2 border-[#00fff7] bg-[#1a2233] text-[#f3ede7] w-full font-retro shadow-[0_2px_8px_#00fff733] select-none">
                           {spinning ? slotValues[type] || 'Not selected' : selections[type] || 'Not selected'}
                         </div>
@@ -419,43 +418,47 @@ export default function Home() {
                 </div>
               )}
               {showResult && result && (
-                <div className="w-full max-w-5xl mx-auto bg-[#23243a]/98 rounded-3xl shadow-2xl border-4 border-[#00fff7] p-12 flex flex-col md:flex-row gap-14 items-center mt-10 animate-fade-in min-h-[520px] min-w-[340px] md:min-h-[600px] md:min-w-[900px]">
-                  {/* Poster Area */}
-                  <div className="flex-[1.2] flex justify-center items-center">
-                    {result.poster_url && (
-                      <img
-                        src={result.poster_url}
-                        alt={result.title}
-                        className="rounded-2xl shadow-2xl max-w-[420px] max-h-[80vh] border-4 border-[#00fff7] bg-[#1a2233]"
-                        style={{boxShadow:'0 4px 32px #00fff7', width: '100%', height: 'auto', objectFit: 'cover'}} />
-                    )}
-                  </div>
-                  {/* Info Area */}
-                  <div className="flex-[2] flex flex-col justify-center items-start p-2 md:p-6 bg-[#23243a]/80 rounded-2xl border-2 border-[#00fff7] min-h-[420px] w-full">
-                    <h2 className="text-5xl mb-4 font-extrabold text-[#00fff7] font-retro italic tracking-tight" style={{letterSpacing:'-1px',textShadow:'0 1px 0 #fff, 2px 2px 0 #00fff7'}}>
-                      {result.title} <span className="text-3xl text-[#fffbe7] font-normal">({result.release_year})</span>
-                    </h2>
-                    <p className="mb-6 text-lg text-[#00fff7] font-bold">Description:<span className="text-[#f3ede7] font-normal ml-2">{result.description}</span></p>
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-lg w-full mb-4">
-                      <span className="font-bold text-[#00fff7]">Director:</span>
-                      <span className="text-[#f3ede7]">{result.director}</span>
-                      <span className="font-bold text-[#00fff7]">Country:</span>
-                      <span className="text-[#f3ede7]">{result.country}</span>
-                      <span className="font-bold text-[#00fff7]">Genre:</span>
-                      <span className="text-[#f3ede7]">{result.genre}</span>
-                      <span className="font-bold text-[#00fff7]">Budget:</span>
-                      <span className="text-[#f3ede7]">{result.budget}</span>
-                      <span className="font-bold text-[#00fff7]">Where to watch:</span>
-                      <span className="text-[#f3ede7]">{result.watch_info}</span>
+                <>
+                  <div className="w-full max-w-5xl mx-auto bg-[#23243a]/98 rounded-3xl shadow-2xl border-4 border-[#00fff7] p-12 flex flex-col md:flex-row gap-14 items-center mt-10 animate-fade-in min-h-[520px] min-w-[340px] md:min-h-[600px] md:min-w-[900px]">
+                    {/* Poster Area */}
+                    <div className="flex-[1.2] flex justify-center items-center">
+                      {result.poster_url && (
+                        <img
+                          src={result.poster_url}
+                          alt={result.title}
+                          className="rounded-2xl shadow-2xl max-w-[420px] max-h-[80vh] border-4 border-[#00fff7] bg-[#1a2233]"
+                          style={{boxShadow:'0 4px 32px #00fff7', width: '100%', height: 'auto', objectFit: 'cover'}} />
+                      )}
+                    </div>
+                    {/* Info Area */}
+                    <div className="flex-[2] flex flex-col justify-center items-start p-2 md:p-6 bg-[#23243a]/80 rounded-2xl border-2 border-[#00fff7] min-h-[420px] w-full">
+                      <h2 className="text-5xl mb-4 font-extrabold text-[#00fff7] font-retro italic tracking-tight" style={{letterSpacing:'-1px',textShadow:'0 1px 0 #fff, 2px 2px 0 #00fff7'}}>
+                        {result.title} <span className="text-3xl text-[#fffbe7] font-normal">({result.release_year})</span>
+                      </h2>
+                      <p className="mb-6 text-lg text-[#00fff7] font-bold">Description:<span className="text-[#f3ede7] font-normal ml-2">{result.description}</span></p>
+                      <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-lg w-full mb-4">
+                        <span className="font-bold text-[#00fff7]">Director:</span>
+                        <span className="text-[#f3ede7]">{result.director}</span>
+                        <span className="font-bold text-[#00fff7]">Country:</span>
+                        <span className="text-[#f3ede7]">{result.country}</span>
+                        <span className="font-bold text-[#00fff7]">Genre:</span>
+                        <span className="text-[#f3ede7]">{result.genre}</span>
+                        <span className="font-bold text-[#00fff7]">Budget:</span>
+                        <span className="text-[#f3ede7]">{result.budget}</span>
+                        <span className="font-bold text-[#00fff7]">Where to watch:</span>
+                        <span className="text-[#f3ede7]">{result.watch_info}</span>
+                      </div>
                     </div>
                   </div>
-                  <button
-                    className="text-2xl px-10 py-3 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-extrabold rounded-full shadow-lg hover:from-[#ff00c8] hover:to-[#00fff7] transition mt-6 md:mt-0 md:absolute md:bottom-8 md:right-8 font-retro border-2 border-[#00fff7]"
-                    onClick={resetAll}
-                  >
-                    Try Another
-                  </button>
-                </div>
+                  <div className="w-full flex justify-center mt-8">
+                    <button
+                      className="text-2xl px-10 py-3 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-extrabold rounded-full shadow-lg hover:from-[#ff00c8] hover:to-[#00fff7] transition font-retro border-2 border-[#00fff7]"
+                      onClick={resetAll}
+                    >
+                      Try Another
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           )}
