@@ -99,10 +99,36 @@ export default function Home() {
     return () => { ignore = true; };
   }, []);
 
+  // --- Filter state for each picker type ---
+  const [filters, setFilters] = useState<Record<PickerType, Set<string>>>(() => {
+    const initial: Record<PickerType, Set<string>> = {
+      region: new Set(wheels.region),
+      genre: new Set(wheels.genre),
+      decade: new Set(wheels.decade),
+      budget: new Set(wheels.budget),
+    };
+    return initial;
+  });
+
+  const handleFilterChange = (type: PickerType, value: string) => {
+    setFilters((prev) => {
+      const next = { ...prev };
+      const set = new Set(next[type]);
+      if (set.has(value)) {
+        set.delete(value);
+      } else {
+        set.add(value);
+      }
+      next[type] = set;
+      return next;
+    });
+  };
+
   // Helper to spin a wheel (simulate random selection)
   const spinWheel = (type: PickerType) => {
     return new Promise<void>((resolve) => {
-      const options = wheels[type];
+      const options = Array.from(filters[type]);
+      if (options.length === 0) return resolve();
       const choice = options[Math.floor(Math.random() * options.length)];
       setSelections((prev) => ({ ...prev, [type]: choice }));
       setTimeout(resolve, 500); // Simulate spin delay
@@ -176,8 +202,9 @@ export default function Home() {
     // Start slot animation for each picker
     order.forEach((type) => {
       let i = 0;
+      const options = Array.from(filters[type]);
       slotIntervals.current[type] = setInterval(() => {
-        setSlotValues((prev) => ({ ...prev, [type]: wheels[type][i % wheels[type].length] }));
+        setSlotValues((prev) => ({ ...prev, [type]: options[i % options.length] }));
         i++;
       }, 60 + 40 * order.indexOf(type)); // staggered speed
     });
@@ -191,7 +218,12 @@ export default function Home() {
         slotIntervals.current[type] = undefined;
       }
       // Pick the real value
-      const options = wheels[type];
+      const options = Array.from(filters[type]);
+      if (options.length === 0) {
+        setError(`No options selected for ${type}`);
+        setSpinning(false);
+        return;
+      }
       const choice = options[Math.floor(Math.random() * options.length)];
       setSelections((prev) => ({ ...prev, [type]: choice }));
       setSlotValues((prev) => ({ ...prev, [type]: choice }));
@@ -322,6 +354,39 @@ export default function Home() {
           {/* Button Content */}
           {activeTab === 'picker' && (
             <div className="w-full">
+              {/* Filter Controls */}
+              <div className="w-full max-w-2xl mx-auto mb-8 p-6 bg-[#23243a] border-2 border-[#00fff7] rounded-2xl">
+                <h3 className="text-2xl font-bold text-[#00fff7] mb-4 font-retro">Filter Randomization Pool</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {order.map((type) => (
+                    <div key={type} className="bg-[#1a2233] rounded-xl p-4 border-2 border-[#23243a] flex flex-col mb-2">
+                      <div className="font-bold text-[#00fff7] mb-3 uppercase tracking-wider text-lg text-center">{type.charAt(0).toUpperCase() + type.slice(1)}</div>
+                      <div
+                        className="flex flex-col gap-1"
+                        style={{wordBreak:'break-word',maxWidth:'100%'}}
+                      >
+                        {(type === 'budget' ? wheels.budget : [...wheels[type]].sort()).map((option) => (
+                          <label
+                            key={option}
+                            className="flex items-center gap-2 text-[#eaf6fb] text-base cursor-pointer px-1 py-0.5 rounded hover:bg-[#23243a] transition"
+                            style={{minHeight:'2rem',overflowWrap:'anywhere',maxWidth:'100%'}}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={filters[type].has(option)}
+                              onChange={() => handleFilterChange(type, option)}
+                              className="accent-[#00fff7]"
+                              style={{width:'1.15rem',height:'1.15rem',minWidth:'1.15rem',minHeight:'1.15rem',margin:0,verticalAlign:'middle'}}
+                            />
+                            <span style={{fontSize:'1rem',lineHeight:'1.15rem',display:'inline-block',minHeight:'1.15rem',wordBreak:'break-word',maxWidth:'100%'}}>{option}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="text-sm text-[#a084ff] mt-4 text-center">Uncheck any options you want to exclude from the random picker.</div>
+              </div>
               {/* Picker UI (was previously here) */}
               {!showResult && (
                 <div className="w-full max-w-2xl mx-auto bg-[#23243a]/95 rounded-3xl shadow-2xl border-4 border-[#00fff7] p-10 flex flex-col items-center gap-8 animate-glow">
