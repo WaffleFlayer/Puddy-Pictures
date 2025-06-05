@@ -50,6 +50,22 @@ export default function AdminSubscribers() {
       });
   }, [pwOk]);
 
+  // On mount, check for saved admin_pw in sessionStorage
+  useEffect(() => {
+    const savedPw = sessionStorage.getItem('admin_pw');
+    if (savedPw) {
+      setPw(savedPw);
+      setPwOk(true);
+    }
+  }, []);
+
+  // When pwOk and pw are set, save to sessionStorage
+  useEffect(() => {
+    if (pwOk && pw) {
+      sessionStorage.setItem('admin_pw', pw);
+    }
+  }, [pwOk, pw]);
+
   const handleDelete = async (phone: string) => {
     if (!window.confirm('Are you sure you want to remove this subscriber?')) return;
     const res = await fetchWithPassword('/api/admin-subscribers', {
@@ -95,6 +111,7 @@ export default function AdminSubscribers() {
         if (res.ok) {
           setPwOk(true);
           setPwError("");
+          sessionStorage.setItem('admin_pw', pw);
         } else {
           setPwError("Incorrect password.");
         }

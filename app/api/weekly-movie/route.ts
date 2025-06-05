@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 
 const WEEKLY_PATH = path.join(process.cwd(), 'weekly-movie.json');
+const HISTORY_PATH = path.join(process.cwd(), 'weekly-movie-history.json');
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'changeme';
 
 function checkAdminPassword(req: NextRequest) {
@@ -33,6 +34,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
     fs.writeFileSync(WEEKLY_PATH, JSON.stringify(body, null, 2));
+    // --- Append to history ---
+    let history = [];
+    if (fs.existsSync(HISTORY_PATH)) {
+      try {
+        history = JSON.parse(fs.readFileSync(HISTORY_PATH, 'utf-8'));
+      } catch {}
+    }
+    const entry = { ...body, timestamp: new Date().toISOString() };
+    history.unshift(entry); // add to start
+    if (history.length > 50) history = history.slice(0, 50); // keep last 50
+    fs.writeFileSync(HISTORY_PATH, JSON.stringify(history, null, 2));
+    // ---
     return NextResponse.json({ success: true });
   } catch (e) {
     return NextResponse.json({ error: 'Server error' }, { status: 500 });

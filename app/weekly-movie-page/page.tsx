@@ -1,6 +1,6 @@
 // Admin/automation page to view and set the weekly movie
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 
 type PickerType = "region" | "genre" | "decade" | "budget";
@@ -60,8 +60,27 @@ const order: PickerType[] = ["region", "genre", "decade", "budget"];
 
 // Helper to generate a review code
 function generateMovieCode(title: string, year: string) {
-  const clean = (title || "").replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-  const code = (clean.slice(0, 3) + (year ? year.slice(-2) : "00") + Math.floor(Math.random() * 10)).padEnd(6, 'X');
+  // Remove 'The ' from the start of the title if present (case-insensitive)
+  let processedTitle = (title || "").trim();
+  if (/^the\s+/i.test(processedTitle)) {
+    processedTitle = processedTitle.replace(/^the\s+/i, '');
+  }
+  let clean = processedTitle.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+  // List of banned 3-letter prefixes (add more as needed)
+  const banned = ["ASS", "NIG", "FAG", "CUM", "SEX", "DIE", "FUK", "FUC", "TIT", "PIS", "PUS", "DIC", "COC", "COK", "JIZ", "GAY", "RAP", "SUC", "SUK", "FAP", "FAG", "FCK", "FUC", "FUK", "FUX", "XXX"];
+  let prefix = clean.slice(0, 3);
+  let code;
+  let attempts = 0;
+  // Try up to 10 times to avoid a banned prefix
+  do {
+    prefix = clean.slice(0, 3);
+    if (banned.includes(prefix)) {
+      // If banned, shift by one character (or randomize if too short)
+      clean = clean.length > 3 ? clean.slice(1) : Math.random().toString(36).substring(2, 5).toUpperCase();
+    }
+    code = (prefix + (year ? year.slice(-2) : "00") + Math.floor(Math.random() * 10)).padEnd(6, 'X');
+    attempts++;
+  } while (banned.includes(prefix) && attempts < 10);
   return code;
 }
 
@@ -150,6 +169,22 @@ export default function WeeklyMovieAdmin() {
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState("");
 
+  // --- Slot machine animation state ---
+  const [slotValues, setSlotValues] = useState<Selections>({});
+  const slotIntervals = useRef<{ [key in PickerType]?: NodeJS.Timeout }>({});
+
+  // --- Weekly Movie History ---
+  const [history, setHistory] = useState<any[]>([]);
+  useEffect(() => {
+    if (!pwOk) return;
+    fetch('/api/weekly-movie-history', {
+      headers: { 'x-admin-password': pw }
+    })
+      .then(r => r.ok ? r.json() : [])
+      .then(setHistory)
+      .catch(() => setHistory([]));
+  }, [pwOk, saveStatus]);
+
   // Store password in sessionStorage for session persistence
   useEffect(() => {
     const savedPw = sessionStorage.getItem('admin_pw');
@@ -225,57 +260,86 @@ export default function WeeklyMovieAdmin() {
     );
   }
 
-  // Spin logic (same as picker)
-  // Helper to spin a wheel and return the chosen value
-  const spinWheel = (type: PickerType): Promise<string> => {
-    return new Promise((resolve) => {
-      const options = wheels[type];
-      const choice = options[Math.floor(Math.random() * options.length)];
-      setSelections((prev) => ({ ...prev, [type]: choice }));
-      setTimeout(() => resolve(choice), 400);
-    });
-  };
-
+  // Spin logic (now using slot machine animation)
+  // --- Modified runSequence for slot animation ---
   const runSequence = async () => {
     setSpinning(true);
     setSpinResults([]);
     setResult(null);
     setIntro("");
+    // Start slot animation for each picker
+    order.forEach((type) => {
+      let i = 0;
+      slotIntervals.current[type] = setInterval(() => {
+        setSlotValues((prev) => ({ ...prev, [type]: wheels[type][i % wheels[type].length] }));
+        i++;
+      }, 60 + 40 * order.indexOf(type)); // staggered speed
+    });
     let newSelections: Selections = {};
-    let newResults: string[] = [];
-    // Spin each wheel and update local selections and results
     for (const type of order) {
-      const value = await spinWheel(type);
-      newSelections = { ...newSelections, [type]: value };
-      newResults.push(`${type.charAt(0).toUpperCase() + type.slice(1)}: ${value}`);
-      setSpinResults([...newResults]);
+      await new Promise((resolve) => setTimeout(resolve, 900 + 200 * order.indexOf(type)));
+      // Stop the slot animation for this picker
+      if (slotIntervals.current[type]) {
+        clearInterval(slotIntervals.current[type]);
+        slotIntervals.current[type] = undefined;
+      }
+      // Pick the real value
+      const options = wheels[type];
+      const choice = options[Math.floor(Math.random() * options.length)];
+      setSelections((prev) => ({ ...prev, [type]: choice }));
+      setSlotValues((prev) => ({ ...prev, [type]: choice }));
+      newSelections = { ...newSelections, [type]: choice };
+      setSpinResults((prev) => ([...prev, `${type.charAt(0).toUpperCase() + type.slice(1)}: ${choice}`]));
     }
-    setSelections(newSelections); // ensure state matches what was spun
-    // Log the rolled values for verification
-    console.log('Rolled wheel values:', newSelections);
-    // Use the local newSelections for the API call
+    // Use the final selections from the wheel spins
     try {
-      const res = await fetch("/api/generate-movie", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newSelections),
-      });
-      if (!res.ok) throw new Error("Server error");
-      const data: MovieResult = await res.json();
-      // Generate code
-      const movieCode = generateMovieCode(data.title, data.release_year);
-      data.code = movieCode;
-      // Fetch AI intro from API
+      let data: MovieResult | null = null;
       let aiIntro = '';
+      let attempts = 0;
+      const maxAttempts = 10;
+      let duplicate = false;
+      do {
+        duplicate = false;
+        const res = await fetch("/api/generate-movie", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newSelections),
+        });
+        if (!res.ok) throw new Error("Server error");
+        const raw = await res.json();
+        // Defensive: ensure required fields
+        if (!raw || !raw.title || !raw.release_year) {
+          attempts++;
+          duplicate = true;
+          continue;
+        }
+        // Generate code
+        const movieCode = generateMovieCode(raw.title, raw.release_year);
+        data = { ...raw, code: movieCode } as MovieResult;
+        // Check for duplicate in history (by title+release_year or code)
+        if (history.some((m) => (m.title?.toLowerCase() === data!.title.toLowerCase() && m.release_year == data!.release_year) || (m.code && m.code === data!.code))) {
+          duplicate = true;
+          attempts++;
+        } else {
+          duplicate = false;
+        }
+      } while (duplicate && attempts < maxAttempts);
+      if (!data || duplicate) {
+        setResult(null);
+        setIntro("");
+        setSpinning(false);
+        setSaveStatus("");
+        setStatus("All generated movies are repeats. Try spinning again or change the criteria.");
+        return;
+      }
+      // Fetch AI intro from API
       try {
-        // Try both {movie} and flat movie fields for compatibility
         let aiRes = await fetch('/api/ai-witty-intro', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ movie: data })
         });
         if (!aiRes.ok) {
-          // fallback: try flat fields (legacy API)
           aiRes = await fetch('/api/ai-witty-intro', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -327,6 +391,29 @@ export default function WeeklyMovieAdmin() {
     setSaving(false);
   };
 
+  // Add this handler for deleting a movie from history
+  const handleDeleteHistory = async (index: number) => {
+    if (!window.confirm('Are you sure you want to remove this movie from history?')) return;
+    try {
+      const res = await fetch('/api/delete-weekly-movie-history', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-password': pw
+        },
+        body: JSON.stringify({ index })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setHistory(data.history);
+      } else {
+        alert('Failed to delete movie from history.');
+      }
+    } catch {
+      alert('Failed to delete movie from history.');
+    }
+  };
+
   return (
     <>
       <Head>
@@ -348,22 +435,15 @@ export default function WeeklyMovieAdmin() {
           </div>
         </nav>
         <h1 className="text-4xl font-extrabold text-[#00fff7] mb-6">Weekly Movie Admin</h1>
-        {/* Wheel UI */}
+        {/* Wheel UI - now slot machine style */}
         <div className="w-full max-w-2xl mx-auto bg-[#23243a]/95 rounded-3xl shadow-2xl border-4 border-[#00fff7] p-10 flex flex-col items-center gap-8 animate-glow">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
             {order.map((type) => (
               <div key={type} className="flex flex-col items-start w-full">
                 <label className="text-lg mb-2 font-bold text-[#00fff7] font-retro uppercase tracking-wider">{type.charAt(0).toUpperCase() + type.slice(1)}</label>
-                <select
-                  className="text-lg p-3 rounded-xl border-2 border-[#00fff7] bg-[#1a2233] text-[#f3ede7] w-full font-retro shadow-[0_2px_8px_#00fff733]"
-                  value={selections[type] || ""}
-                  onChange={(e) => setSelections((prev) => ({ ...prev, [type]: e.target.value }))}
-                >
-                  <option value="">Select {type}</option>
-                  {wheels[type].map((opt) => (
-                    <option key={opt} value={opt}>{opt}</option>
-                  ))}
-                </select>
+                <div className="text-lg p-3 rounded-xl border-2 border-[#00fff7] bg-[#1a2233] text-[#f3ede7] w-full font-retro shadow-[0_2px_8px_#00fff733] select-none">
+                  {spinning ? slotValues[type] || 'Not selected' : selections[type] || 'Not selected'}
+                </div>
               </div>
             ))}
           </div>
@@ -460,6 +540,48 @@ export default function WeeklyMovieAdmin() {
               </div>
               <div className="mb-2 text-[#a084ff]">Review Code: <span className="font-mono">{movie.code}</span></div>
               <div className="mb-2 text-[#00fff7]">Reply to the club SMS with this code at the start of your review!</div>
+            </div>
+          </div>
+        )}
+        {/* Weekly Movie History Table */}
+        {history.length > 0 && (
+          <div className="w-full max-w-4xl mx-auto mt-16 mb-8">
+            <h2 className="text-3xl font-extrabold text-[#00fff7] mb-4 font-retro">Previous Weekly Movies</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full bg-[#23243a] border-4 border-[#00fff7] rounded-2xl shadow-xl">
+                <thead>
+                  <tr className="text-left text-[#00fff7] border-b-2 border-[#00fff7]">
+                    <th className="p-3">Date</th>
+                    <th className="p-3">Title</th>
+                    <th className="p-3">Year</th>
+                    <th className="p-3">Genre</th>
+                    <th className="p-3">Country</th>
+                    <th className="p-3">Code</th>
+                    <th className="p-3">Remove</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {history.map((m, i) => (
+                    <tr key={i} className="border-b border-[#23243a] hover:bg-[#1a2233]">
+                      <td className="p-2 whitespace-nowrap">{m.timestamp ? new Date(m.timestamp).toLocaleDateString() : ''}</td>
+                      <td className="p-2 whitespace-nowrap">{m.title}</td>
+                      <td className="p-2 whitespace-nowrap">{m.release_year}</td>
+                      <td className="p-2 whitespace-nowrap">{m.genre}</td>
+                      <td className="p-2 whitespace-nowrap">{m.country}</td>
+                      <td className="p-2 font-mono">{m.code}</td>
+                      <td className="p-2">
+                        <button
+                          className="px-3 py-1 bg-[#ff00c8] text-[#fffbe7] rounded font-bold hover:bg-[#a084ff] transition"
+                          onClick={() => handleDeleteHistory(i)}
+                          title="Remove from history"
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}

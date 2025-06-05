@@ -111,9 +111,27 @@ export default function Home() {
 
   // Generate a unique code for the movie (e.g., 6-char alphanumeric)
   function generateMovieCode(title: string, year: string) {
-    // Simple hash: first 3 letters of title (no spaces), last 2 digits of year, random digit
-    const clean = title.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-    const code = (clean.slice(0, 3) + (year.slice(-2)) + Math.floor(Math.random() * 10)).padEnd(6, 'X');
+    // Remove 'The ' from the start of the title if present (case-insensitive)
+    let processedTitle = (title || "").trim();
+    if (/^the\s+/i.test(processedTitle)) {
+      processedTitle = processedTitle.replace(/^the\s+/i, '');
+    }
+    const clean = processedTitle.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    // List of banned 3-letter prefixes (add more as needed)
+    const banned = ["ASS", "NIG", "FAG", "CUM", "SEX", "DIE", "FUK", "FUC", "TIT", "PIS", "PUS", "DIC", "COC", "COK", "JIZ", "JIZ", "GAY", "RAP", "SUC", "SUK", "FAP", "FAG", "FCK", "FUC", "FUK", "FUX", "XXX"];
+    let prefix = clean.slice(0, 3);
+    let code;
+    let attempts = 0;
+    // Try up to 10 times to avoid a banned prefix
+    do {
+      prefix = clean.slice(0, 3);
+      if (banned.includes(prefix)) {
+        // If banned, shift by one character (or randomize if too short)
+        clean.length > 3 ? clean.slice(1, 4) : (prefix = Math.random().toString(36).substring(2, 5).toUpperCase());
+      }
+      code = (prefix + (year ? year.slice(-2) : "00") + Math.floor(Math.random() * 10)).padEnd(6, 'X');
+      attempts++;
+    } while (banned.includes(prefix) && attempts < 10);
     return code;
   }
 
