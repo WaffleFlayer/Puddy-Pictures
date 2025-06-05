@@ -1,7 +1,7 @@
 'use client';
 
 import Image from "next/image";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Head from 'next/head';
 
 type PickerType = "region" | "genre" | "decade" | "budget";
@@ -144,25 +144,41 @@ export default function Home() {
     }
   }, [showResult, result?.code, fetchReviews]);
 
-  // Main sequence
+  // --- Slot machine animation state ---
+  const [slotValues, setSlotValues] = useState<Selections>({});
+  const slotIntervals = useRef<{ [key in PickerType]?: NodeJS.Timeout }>({});
+
+  // --- Modified runSequence for slot animation ---
   const runSequence = async () => {
     setSpinning(true);
     setSpinResults([]);
     setShowResult(false);
     setError("");
-    let newSelections: Selections = {};
-    let newResults: string[] = [];
+    setResult(null);
+    // Start slot animation for each picker
+    order.forEach((type) => {
+      let i = 0;
+      slotIntervals.current[type] = setInterval(() => {
+        setSlotValues((prev) => ({ ...prev, [type]: wheels[type][i % wheels[type].length] }));
+        i++;
+      }, 60 + 40 * order.indexOf(type)); // staggered speed
+    });
     // Spin each wheel and update selections and results
+    let newSelections: Selections = {};
     for (const type of order) {
+      await new Promise((resolve) => setTimeout(resolve, 900 + 200 * order.indexOf(type)));
+      // Stop the slot animation for this picker
+      if (slotIntervals.current[type]) {
+        clearInterval(slotIntervals.current[type]);
+        slotIntervals.current[type] = undefined;
+      }
+      // Pick the real value
       const options = wheels[type];
       const choice = options[Math.floor(Math.random() * options.length)];
-      newSelections = { ...newSelections, [type]: choice };
       setSelections((prev) => ({ ...prev, [type]: choice }));
-      newResults.push(
-        `${type.charAt(0).toUpperCase() + type.slice(1)}: ${choice}`
-      );
-      setSpinResults([...newResults]);
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate spin delay
+      setSlotValues((prev) => ({ ...prev, [type]: choice }));
+      newSelections = { ...newSelections, [type]: choice };
+      setSpinResults((prev) => ([...prev, `${type.charAt(0).toUpperCase() + type.slice(1)}: ${choice}`]));
     }
     // Use the final selections from the wheel spins
     try {
@@ -297,7 +313,7 @@ export default function Home() {
                         <label className="text-lg mb-2 font-bold text-[#00fff7] font-retro uppercase tracking-wider">{type.charAt(0).toUpperCase() + type.slice(1)}</label>
                         {/* Dropdown removed, replaced with static text */}
                         <div className="text-lg p-3 rounded-xl border-2 border-[#00fff7] bg-[#1a2233] text-[#f3ede7] w-full font-retro shadow-[0_2px_8px_#00fff733] select-none">
-                          {selections[type] || `Not selected`}
+                          {spinning ? slotValues[type] || 'Not selected' : selections[type] || 'Not selected'}
                         </div>
                       </div>
                     ))}
