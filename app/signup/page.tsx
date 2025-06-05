@@ -2,17 +2,48 @@
 
 import { useState } from "react";
 
+// Format US phone number as (XXX) XXX-XXXX
+function formatPhoneNumber(value: string) {
+  // Remove all non-digit characters
+  const digits = value.replace(/\D/g, "");
+  if (digits.length === 0) return "";
+  if (digits.length < 4) return `(${digits}`;
+  if (digits.length < 7) return `(${digits.slice(0,3)}) ${digits.slice(3)}`;
+  return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6,10)}`;
+}
+
 export default function Signup() {
-  const [form, setForm] = useState({ name: "", phone: "", consent: false });
+  const [form, setForm] = useState({ name: "", displayName: "", phone: "", consent: false });
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const [checkingDisplayName, setCheckingDisplayName] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    if (name === "phone") {
+      setForm((prev) => ({
+        ...prev,
+        phone: formatPhoneNumber(value),
+      }));
+    } else if (name === "displayName") {
+      setForm((prev) => ({ ...prev, displayName: value }));
+      setError("");
+      if (value.trim()) {
+        setCheckingDisplayName(true);
+        // Check uniqueness via API
+        const res = await fetch(`/api/register-user?displayName=${encodeURIComponent(value.trim())}`);
+        const data = await res.json();
+        if (data.taken) {
+          setError("That display name is already taken. Please choose another.");
+        }
+        setCheckingDisplayName(false);
+      }
+    } else {
+      setForm((prev) => ({
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,13 +53,28 @@ export default function Signup() {
       setError("You must consent to receive messages.");
       return;
     }
+    if (checkingDisplayName) {
+      setError("Please wait for display name check to finish.");
+      return;
+    }
+    // Check again before submit
+    if (form.displayName && form.displayName.trim()) {
+      const res = await fetch(`/api/register-user?displayName=${encodeURIComponent(form.displayName.trim())}`);
+      const data = await res.json();
+      if (data.taken) {
+        setError("That display name is already taken. Please choose another.");
+        return;
+      }
+    }
+    const rawPhone = form.phone.replace(/\D/g, "");
     try {
       const res = await fetch("/api/register-user", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({
           name: form.name,
-          phone: form.phone,
+          displayName: form.displayName,
+          phone: rawPhone,
           consent: form.consent ? "yes" : "",
         }).toString(),
       });
@@ -60,6 +106,10 @@ export default function Signup() {
         <section className="flex flex-col items-center justify-center flex-1 py-14 px-4 text-center">
           <div className="w-full max-w-xl mx-auto bg-[#23243a]/95 rounded-3xl shadow-2xl border-4 border-[#00fff7] p-10 flex flex-col items-center gap-8 animate-glow">
             <h1 className="text-5xl font-extrabold mb-6 text-[#00fff7] font-retro italic tracking-tight" style={{letterSpacing:'-1px',textShadow:'0 1px 0 #fff, 2px 2px 0 #00fff7'}}>Sign Up</h1>
+            <p className="text-lg text-[#eaf6fb] mb-6 max-w-2xl mx-auto">
+              <strong>Join the Puddy Pictures Movie Club!</strong> Each week, we spin the wheels to pick a surprise film from around the world—different genres, decades, and countries. Sign up to receive a fun MMS every Friday with the “Movie of the Week,” including a poster, description, and streaming info. Watch along, share your thoughts, and be part of a global movie adventure. It’s free, easy, and you can unsubscribe at any time. <br /><br />
+              <span className="text-[#00fff7]">Ready to discover your next favorite film?</span>
+            </p>
             <div className="flex flex-col items-center gap-4">
               <span className="text-3xl text-[#ff00c8] font-bold animate-bounce">🎉 Welcome to the Club! 🎉</span>
               <span className="text-lg text-[#a084ff]">You’re officially signed up for Movie of the Week!</span>
@@ -71,6 +121,8 @@ export default function Signup() {
           <a href="/privacy" className="font-bold hover:underline mx-2">Privacy Policy</a> |
           <a href="/terms" className="font-bold hover:underline mx-2">Terms</a> |
           <a href="/signup" className="font-bold hover:underline mx-2">Sign Up</a>
+          <span className="mx-2">|</span>
+          <a href="/weekly-movie-page" className="mx-2" style={{ fontSize: '0.95em', opacity: 0.5, textDecoration: 'underline' }}>Admin</a>
         </footer>
         <style jsx global>{`
           @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=IBM+Plex+Sans:wght@400;700&display=swap');
@@ -129,6 +181,10 @@ export default function Signup() {
       <section className="flex flex-col items-center justify-center flex-1 py-14 px-4 text-center">
         <div className="w-full max-w-xl mx-auto bg-[#23243a]/95 rounded-3xl shadow-2xl border-4 border-[#00fff7] p-10 flex flex-col items-center gap-8 animate-glow">
           <h1 className="text-5xl font-extrabold mb-6 text-[#00fff7] font-retro italic tracking-tight" style={{letterSpacing:'-1px',textShadow:'0 1px 0 #fff, 2px 2px 0 #00fff7'}}>Sign Up</h1>
+          <p className="text-lg text-[#eaf6fb] mb-6 max-w-2xl mx-auto">
+            <strong>Join the Puddy Pictures Movie Club!</strong> Each week, we spin the wheels to pick a surprise film from around the world—different genres, decades, and countries. Sign up to receive a fun MMS every Friday with the “Movie of the Week,” including a poster, description, and streaming info. Watch along, share your thoughts, and be part of a global movie adventure. It’s free, easy, and you can unsubscribe at any time. <br /><br />
+            <span className="text-[#00fff7]">Ready to discover your next favorite film?</span>
+          </p>
           <form onSubmit={handleSubmit} className="w-full flex flex-col gap-6 text-left text-lg text-[#eaf6fb] font-retro">
             <label className="block">
               Name:<br />
@@ -138,15 +194,29 @@ export default function Signup() {
                 value={form.name}
                 onChange={handleChange}
                 required
+                placeholder="Legal name (not shown)"
                 className="bg-[#181c2b] border-2 border-[#a084ff] rounded-xl px-4 py-3 text-lg text-[#eaf6fb] font-retro placeholder-[#bdbdbd] focus:outline-none focus:border-[#00fff7] w-full transition-shadow focus:shadow-[0_0_8px_2px_#00fff7]"
               />
+            </label>
+            <label className="block">
+              Display Name:<br />
+              <input
+                type="text"
+                name="displayName"
+                value={form.displayName}
+                onChange={handleChange}
+                required
+                placeholder="Bilbo Potter"
+                className="bg-[#181c2b] border-2 border-[#00fff7] rounded-xl px-4 py-3 text-lg text-[#eaf6fb] font-retro placeholder-[#bdbdbd] focus:outline-none focus:border-[#ff00c8] w-full transition-shadow focus:shadow-[0_0_8px_2px_#ff00c8]"
+              />
+              <span className="text-sm text-[#a084ff]">This name will be shown with your reviews.</span>
             </label>
             <label className="block">
               Phone:<br />
               <input
                 type="tel"
                 name="phone"
-                placeholder="+15551234567"
+                placeholder="(555) 123-4567"
                 value={form.phone}
                 onChange={handleChange}
                 required
@@ -155,7 +225,7 @@ export default function Signup() {
             </label>
             <div className="text-sm text-[#a084ff] mb-2">
               <strong>Puddy Pictures Movie Club Opt‐In:</strong><br />
-              By checking this box, you agree to receive a weekly MMS (every Thursday)
+              By checking this box, you agree to receive a weekly MMS (every Friday)
               from <strong>Puddy Pictures Movie Club</strong> that contains our “Movie of the Week”
               poster image and streaming information. Msg &amp; Data Rates May Apply.
               Reply <strong>STOP</strong> at any time to unsubscribe.
@@ -189,6 +259,8 @@ export default function Signup() {
         <a href="/privacy" className="font-bold hover:underline mx-2">Privacy Policy</a> |
         <a href="/terms" className="font-bold hover:underline mx-2">Terms</a> |
         <a href="/signup" className="font-bold hover:underline mx-2">Sign Up</a>
+        <span className="mx-2">|</span>
+        <a href="/weekly-movie-page" className="mx-2" style={{ fontSize: '0.95em', opacity: 0.5, textDecoration: 'underline' }}>Admin</a>
       </footer>
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=IBM+Plex+Sans:wght@400;700&display=swap');

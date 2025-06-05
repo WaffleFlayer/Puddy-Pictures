@@ -378,6 +378,8 @@ export default function Home() {
         <a href="/privacy" className="font-bold hover:underline mx-2">Privacy Policy</a> |
         <a href="/terms" className="font-bold hover:underline mx-2">Terms</a> |
         <a href="/signup" className="font-bold hover:underline mx-2">Sign Up</a>
+        <span className="mx-2">|</span>
+        <a href="/weekly-movie-page" className="mx-2" style={{ fontSize: '0.95em', opacity: 0.5, textDecoration: 'underline' }}>Admin</a>
       </footer>
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=IBM+Plex+Sans:wght@400;700&display=swap');

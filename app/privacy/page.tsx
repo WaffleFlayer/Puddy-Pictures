@@ -41,6 +41,8 @@ export default function Privacy() {
             <p className="mb-4">We may periodically update this policy. Changes will be posted here with an updated effective date.</p>
             <h2 className="text-2xl font-semibold mt-6 mb-2">Contact</h2>
             <p className="mb-4">If you have any questions or concerns about this Privacy Policy or our practices, please contact us at <a href="mailto:contact@puddypictures.club" className="text-[#00fff7] underline">contact@puddypictures.club</a>.</p>
+            <h2 className="text-2xl font-semibold mt-6 mb-2">User Reviews and Public Display</h2>
+            <p className="mb-4">If you reply to a club SMS with a movie review, your review and your chosen display name may be published on our website for other members to see. Your legal name and phone number will never be shown publicly. <strong>If you unsubscribe from the club, all of your reviews will be permanently deleted from our website.</strong></p>
           </div>
         </div>
       </section>
@@ -48,6 +50,8 @@ export default function Privacy() {
         <a href="/privacy" className="font-bold hover:underline mx-2">Privacy Policy</a> |
         <a href="/terms" className="font-bold hover:underline mx-2">Terms</a> |
         <a href="/signup" className="font-bold hover:underline mx-2">Sign Up</a>
+        <span className="mx-2">|</span>
+        <a href="/weekly-movie-page" className="mx-2" style={{ fontSize: '0.95em', opacity: 0.5, textDecoration: 'underline' }}>Admin</a>
       </footer>
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=IBM+Plex+Sans:wght@400;700&display=swap');

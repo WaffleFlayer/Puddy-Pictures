@@ -89,7 +89,7 @@ function WeeklyMoviePublic({ movie }: { movie: any }) {
       setLoading(true);
       fetch(`/api/get-reviews?code=${movie.code}`)
         .then(r => r.json())
-        .then(data => setReviews(data))
+        .then((data) => setReviews(data))
         .finally(() => setLoading(false));
     }
   }, [movie]);
@@ -124,8 +124,6 @@ export default function WeeklyMovieAdmin() {
   const [pw, setPw] = useState("");
   const [pwOk, setPwOk] = useState(false);
   const [pwError, setPwError] = useState("");
-  // Change this to your desired password
-  const ADMIN_PASSWORD = "puddyclub2024";
 
   const [movie, setMovie] = useState<any>(null);
   const [form, setForm] = useState<any>({});
@@ -139,36 +137,57 @@ export default function WeeklyMovieAdmin() {
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState("");
 
+  // Store password in sessionStorage for session persistence
   useEffect(() => {
-    fetch('/api/weekly-movie')
-      .then(r => r.json())
-      .then(data => { if (!data.error) setMovie(data); });
+    const savedPw = sessionStorage.getItem('admin_pw');
+    if (savedPw) {
+      setPw(savedPw);
+      setPwOk(true);
+    }
   }, []);
 
-  const handleChange = (e: any) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e: any) => {
-    e.preventDefault();
-    setStatus('');
-    const res = await fetch('/api/weekly-movie', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    });
-    if (res.ok) {
-      setStatus('Weekly movie set!');
-      setMovie(form);
-    } else {
-      setStatus('Error setting weekly movie.');
+  useEffect(() => {
+    if (pwOk && pw) {
+      sessionStorage.setItem('admin_pw', pw);
     }
+  }, [pwOk, pw]);
+
+  // Helper to fetch with admin password header
+  const fetchWithPassword = async (url: string, options: any = {}) => {
+    const headers = options.headers || {};
+    headers['x-admin-password'] = pw;
+    options.headers = headers;
+    return fetch(url, options);
   };
 
-  const publicUrl = typeof window !== 'undefined' ? `${window.location.origin}/weekly-movie` : '';
+  // Fetch weekly movie with password header after login
+  useEffect(() => {
+    if (!pwOk) return;
+    fetchWithPassword('/api/weekly-movie')
+      .then(async r => {
+        if (!r.ok) throw new Error('Unauthorized or error');
+        return r.json();
+      })
+      .then(data => { if (!data.error) setMovie(data); })
+      .catch(() => setMovie(null));
+  }, [pwOk]);
 
   // Password gate
   if (!pwOk) {
+    const tryPassword = async () => {
+      try {
+        const res = await fetchWithPassword('/api/weekly-movie');
+        if (res.ok) {
+          setPwOk(true);
+          setPwError("");
+          sessionStorage.setItem('admin_pw', pw);
+        } else {
+          setPwError("Incorrect password.");
+        }
+      } catch {
+        setPwError("Server error.");
+      }
+    };
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#181c2b] text-[#eaf6fb] font-retro">
         <div className="bg-[#23243a] border-4 border-[#00fff7] rounded-3xl p-10 max-w-md w-full flex flex-col items-center">
@@ -179,11 +198,11 @@ export default function WeeklyMovieAdmin() {
             onChange={e => { setPw(e.target.value); setPwError(""); }}
             placeholder="Enter admin password"
             className="w-full p-3 rounded bg-[#1a2233] border-2 border-[#00fff7] text-[#eaf6fb] mb-4 text-lg text-center"
-            onKeyDown={e => { if (e.key === 'Enter') { if (pw === ADMIN_PASSWORD) setPwOk(true); else setPwError('Incorrect password.'); }}}
+            onKeyDown={e => { if (e.key === 'Enter') { tryPassword(); }}}
           />
           <button
             className="px-8 py-2 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-bold rounded shadow border-2 border-[#00fff7] text-lg"
-            onClick={() => { if (pw === ADMIN_PASSWORD) setPwOk(true); else setPwError('Incorrect password.'); }}
+            onClick={tryPassword}
           >
             Enter
           </button>
@@ -281,7 +300,10 @@ export default function WeeklyMovieAdmin() {
     try {
       const res = await fetch("/api/weekly-movie", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": pw // Add admin password header for POST
+        },
         body: JSON.stringify(result), // result now includes ai_intro
       });
       if (!res.ok) throw new Error("Failed to save");
@@ -294,6 +316,20 @@ export default function WeeklyMovieAdmin() {
 
   return (
     <div className="min-h-screen bg-[#181c2b] text-[#eaf6fb] p-8 font-retro">
+      {/* Navigation Bar */}
+      <nav className="w-full flex items-center justify-between px-8 py-4 bg-[#23243a]/90 shadow-lg z-10 border-b-4 border-[#00fff7] mb-8">
+        <div className="flex items-center gap-3">
+          <img src="/globe.svg" alt="Puddy Pictures Logo" className="h-10 w-10 animate-spin-slow" />
+          <span className="text-3xl font-extrabold tracking-tight text-[#00fff7] font-retro italic" style={{letterSpacing:'-1px'}}>Puddy Pictures</span>
+        </div>
+        <div className="flex gap-8 text-lg">
+          <a href="/" className="hover:text-[#ff00c8] transition font-semibold">Home</a>
+          <a href="/privacy" className="hover:text-[#ff00c8] transition font-semibold">Privacy</a>
+          <a href="/terms" className="hover:text-[#ff00c8] transition font-semibold">Terms</a>
+          <a href="/signup" className="hover:text-[#ff00c8] transition font-semibold">Sign Up</a>
+          <a href="/admin-subscribers" className="hover:text-[#ff00c8] transition font-semibold">Subscribers</a>
+        </div>
+      </nav>
       <h1 className="text-4xl font-extrabold text-[#00fff7] mb-6">Weekly Movie Admin</h1>
       {/* Wheel UI */}
       <div className="w-full max-w-2xl mx-auto bg-[#23243a]/95 rounded-3xl shadow-2xl border-4 border-[#00fff7] p-10 flex flex-col items-center gap-8 animate-glow">
