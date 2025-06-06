@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import pool from '../../../utils/postgres';
 
 const HISTORY_FIELDS = 'id, title, year, country, director, description, watch_info, region, genre, decade, budget, release_year, poster_url, code, ai_intro, timestamp';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'changeme';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 function checkAdminPassword(req: NextRequest) {
+  // Only allow access if the password matches exactly and is not empty/null
   const password = req.headers.get('x-admin-password');
-  return password === ADMIN_PASSWORD;
+  return Boolean(ADMIN_PASSWORD) && password === ADMIN_PASSWORD;
 }
 
 // DELETE: remove a movie from history by index
