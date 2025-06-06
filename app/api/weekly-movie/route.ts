@@ -27,6 +27,9 @@ export async function GET(req: NextRequest) {
 
 // POST: set the weekly movie (admin/automation, password required)
 export async function POST(req: NextRequest) {
+  const password = req.headers.get('x-admin-password');
+  console.log('ADMIN_PASSWORD env:', ADMIN_PASSWORD);
+  console.log('Password from header:', password);
   if (!checkAdminPassword(req)) {
     return new NextResponse('Unauthorized', { status: 401 });
   }

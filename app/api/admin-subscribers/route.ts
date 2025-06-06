@@ -10,6 +10,9 @@ function checkAdminPassword(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
+  console.log('ADMIN_PASSWORD env:', ADMIN_PASSWORD);
+  const password = req.headers.get('x-admin-password');
+  console.log('Password from header:', password);
   if (!checkAdminPassword(req)) {
     return new NextResponse('Unauthorized', { status: 401 });
   }
