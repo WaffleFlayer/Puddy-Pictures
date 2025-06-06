@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '../../../utils/postgres';
+import crypto from 'crypto';
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
+
+function timingSafeEqual(a: string, b: string) {
+  const aBuf = Buffer.from(a);
+  const bBuf = Buffer.from(b);
+  if (aBuf.length !== bBuf.length) return false;
+  return crypto.timingSafeEqual(aBuf, bBuf);
+}
 
 function checkAdminPassword(req: NextRequest) {
-  // Only allow access if the password matches exactly and is not empty/null
-  const password = req.headers.get('x-admin-password');
-  return Boolean(ADMIN_PASSWORD) && password === ADMIN_PASSWORD;
+  const password = req.headers.get('x-admin-password') || '';
+  return ADMIN_PASSWORD.length > 0 && timingSafeEqual(password, ADMIN_PASSWORD);
 }
 
 export async function GET(req: NextRequest) {
