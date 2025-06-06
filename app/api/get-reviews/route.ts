@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Database from 'better-sqlite3';
-import path from 'path';
+import pool from '../../../utils/postgres';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -8,9 +7,6 @@ export async function GET(req: NextRequest) {
   if (!code) {
     return NextResponse.json({ error: 'Missing code parameter' }, { status: 400 });
   }
-  // Query reviews.db for reviews matching the code
-  const db = new Database(path.join(process.cwd(), 'reviews.db'));
-  const reviews = db.prepare('SELECT * FROM reviews WHERE code = ? COLLATE NOCASE').all(code);
-  db.close();
-  return NextResponse.json(reviews);
+  const { rows } = await pool.query('SELECT * FROM reviews WHERE code = $1 COLLATE "C"', [code]);
+  return NextResponse.json(rows);
 }

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Database from 'better-sqlite3';
-import path from 'path';
+import pool from '../../../utils/postgres';
 
-const HISTORY_PATH = path.join(process.cwd(), 'weekly-movie-history.db');
+const HISTORY_FIELDS = 'id, title, year, country, director, description, watch_info, region, genre, decade, budget, release_year, poster_url, code, ai_intro, timestamp';
 
 // GET: fetch the weekly movie history (admin only)
 export async function GET(req: NextRequest) {
@@ -12,10 +11,8 @@ export async function GET(req: NextRequest) {
     return new NextResponse('Unauthorized', { status: 401 });
   }
   try {
-    const db = new Database(HISTORY_PATH);
-    const data = db.prepare('SELECT * FROM weekly_movie_history ORDER BY id DESC').all();
-    db.close();
-    return NextResponse.json(data);
+    const { rows } = await pool.query(`SELECT ${HISTORY_FIELDS} FROM weekly_movie_history ORDER BY id DESC`);
+    return NextResponse.json(rows);
   } catch (e) {
     return NextResponse.json({ error: 'Could not load history' }, { status: 500 });
   }

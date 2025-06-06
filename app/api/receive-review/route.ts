@@ -28,12 +28,19 @@ export async function POST(req: NextRequest) {
     if (body.trim().toUpperCase() === 'STOP') {
       // Mark user as unsubscribed in registrations
       await pool.query('UPDATE registrations SET unsubscribed = 1, unsubscribedDate = $1 WHERE REPLACE(REPLACE(phone, \'-\', \'\'), \'(\', \'\') = $2', [new Date().toISOString(), from.replace(/\D/g, '').replace(/^1/, '')]);
-      // Remove all reviews from this user (keep as TODO for now)
+      // Remove all reviews from this user
+      await pool.query('DELETE FROM reviews WHERE REPLACE(REPLACE("from", \'-\', \'\'), \'(\', \'\') = $1', [from.replace(/\D/g, '').replace(/^1/, '')]);
       return new NextResponse('You have been unsubscribed from Puddy Pictures Movie Club.', { status: 200 });
     }
 
-    // Add new review (keep as TODO for now)
-    // ...existing code...
+    // Add new review
+    await pool.query(
+      'INSERT INTO reviews ("from", "to", code, review, displayName, raw, timestamp) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+      [from, to, code, review, displayName, body, timestamp]
+    );
+
+    // Respond with success (Twilio expects a 200 OK)
+    return new NextResponse('Review received. Thank you!', { status: 200 });
   } catch (err) {
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
