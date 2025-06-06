@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
+import Database from 'better-sqlite3';
 import path from 'path';
 
-const HISTORY_PATH = path.join(process.cwd(), 'weekly-movie-history.json');
+const HISTORY_PATH = path.join(process.cwd(), 'weekly-movie-history.db');
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'changeme';
 
 function checkAdminPassword(req: NextRequest) {
@@ -20,18 +20,19 @@ export async function DELETE(req: NextRequest) {
     if (typeof index !== 'number') {
       return NextResponse.json({ error: 'Missing or invalid index' }, { status: 400 });
     }
-    let history = [];
-    if (fs.existsSync(HISTORY_PATH)) {
-      try {
-        history = JSON.parse(fs.readFileSync(HISTORY_PATH, 'utf-8'));
-      } catch {}
-    }
-    if (index < 0 || index >= history.length) {
+    const db = new Database(HISTORY_PATH);
+    // Get all ids ordered by DESC
+    const ids = db.prepare('SELECT id FROM weekly_movie_history ORDER BY id DESC').all();
+    if (index < 0 || index >= ids.length) {
+      db.close();
       return NextResponse.json({ error: 'Index out of range' }, { status: 400 });
     }
-    history.splice(index, 1);
-    fs.writeFileSync(HISTORY_PATH, JSON.stringify(history, null, 2));
-    return NextResponse.json({ success: true, history });
+    const deleteId = (ids[index] as any).id;
+    db.prepare('DELETE FROM weekly_movie_history WHERE id = ?').run(deleteId);
+    // Return updated history
+    const data = db.prepare('SELECT * FROM weekly_movie_history ORDER BY id DESC').all();
+    db.close();
+    return NextResponse.json({ success: true, history: data });
   } catch (e) {
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
+import Database from 'better-sqlite3';
 import path from 'path';
-
-const REVIEWS_PATH = path.join(process.cwd(), 'reviews.json');
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -10,14 +8,9 @@ export async function GET(req: NextRequest) {
   if (!code) {
     return NextResponse.json({ error: 'Missing code parameter' }, { status: 400 });
   }
-  let reviews: any[] = [];
-  try {
-    const file = fs.readFileSync(REVIEWS_PATH, 'utf-8');
-    reviews = JSON.parse(file);
-  } catch (e) {
-    reviews = [];
-  }
-  // Filter reviews by code (case-insensitive)
-  const filtered = reviews.filter(r => r.code && r.code.toUpperCase() === code.toUpperCase());
-  return NextResponse.json(filtered);
+  // Query reviews.db for reviews matching the code
+  const db = new Database(path.join(process.cwd(), 'reviews.db'));
+  const reviews = db.prepare('SELECT * FROM reviews WHERE code = ? COLLATE NOCASE').all(code);
+  db.close();
+  return NextResponse.json(reviews);
 }

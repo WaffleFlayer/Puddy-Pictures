@@ -18,20 +18,14 @@ if (!accountSid || !authToken || !fromNumber) {
 }
 const client = twilio(accountSid, authToken);
 
-// Load subscribers and weekly movie
-const registrationsPath = path.join(__dirname, 'registrations.json');
+// Load weekly movie
 const weeklyMoviePath = path.join(__dirname, 'weekly-movie.json');
 
-if (!fs.existsSync(registrationsPath)) {
-  console.error('registrations.json not found.');
-  process.exit(1);
-}
 if (!fs.existsSync(weeklyMoviePath)) {
   console.error('weekly-movie.json not found.');
   process.exit(1);
 }
 
-const registrations = JSON.parse(fs.readFileSync(registrationsPath, 'utf-8'));
 const movie = JSON.parse(fs.readFileSync(weeklyMoviePath, 'utf-8'));
 
 if (!movie.title || !movie.code) {
@@ -40,6 +34,12 @@ if (!movie.title || !movie.code) {
 }
 
 const message = `Puddy Pictures Movie Club 🎬\n\nThis week's pick: ${movie.title} (${movie.release_year})\n${movie.description}\nWhere to watch: ${movie.watch_info}\nReply with code ${movie.code} to review!`;
+
+// Use SQLite for registrations
+const Database = require('better-sqlite3');
+const db = new Database(path.join(__dirname, 'registrations.db'));
+const registrations = db.prepare('SELECT * FROM registrations WHERE unsubscribed = 0').all();
+db.close();
 
 async function sendAll() {
   for (const sub of registrations) {

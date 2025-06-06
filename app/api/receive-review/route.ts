@@ -1,23 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
+import Database from 'better-sqlite3';
 import path from 'path';
-
-// Path to store reviews (JSON file for simplicity)
-const REVIEWS_PATH = path.join(process.cwd(), 'reviews.json');
-
-// Helper: extract code (first word, 6 chars) and review text
-function extractCodeAndReview(body: string) {
-  // Remove the 's' flag for compatibility
-  const match = body.trim().match(/^(\w{6})\s+(.*)$/);
-  if (match) {
-    return { code: match[1].toUpperCase(), review: match[2].trim() };
-  }
-  return { code: null, review: body.trim() };
-}
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
   try {
-    // Parse incoming SMS webhook (e.g., from Twilio)
     const data = await req.formData();
     const from = data.get('From') as string | null;
     const body = data.get('Body') as string | null;
@@ -29,61 +15,38 @@ export async function POST(req: NextRequest) {
     }
 
     // Extract code and review
-    const { code, review } = extractCodeAndReview(body);
-
-    // Load existing reviews
-    let reviews: any[] = [];
-    try {
-      const file = fs.readFileSync(REVIEWS_PATH, 'utf-8');
-      reviews = JSON.parse(file);
-    } catch (e) {
-      reviews = [];
-    }
+    const match = body.trim().match(/^(\w{6})\s+(.*)$/);
+    const code = match ? match[1].toUpperCase() : null;
+    const review = match ? match[2].trim() : body.trim();
 
     // Find displayName for this phone number
     let displayName = undefined;
-    try {
-      const registrationsFile = path.join(process.cwd(), 'registrations.json');
-      if (fs.existsSync(registrationsFile)) {
-        const registrations = JSON.parse(fs.readFileSync(registrationsFile, 'utf-8'));
-        const reg = registrations.find((r: any) => r.phone && from && r.phone.replace(/\D/g, '') === from.replace(/\D/g, '').replace(/^1/, ''));
-        if (reg && reg.displayName) displayName = reg.displayName;
-      }
-    } catch {}
+    const regDb = new Database(path.join(process.cwd(), 'registrations.db'));
+    const reg = regDb.prepare('SELECT displayName FROM registrations WHERE REPLACE(REPLACE(phone, \'-\', \'\'), \'(\', \'\') = ? LIMIT 1')
+      .get(from.replace(/\D/g, '').replace(/^1/, ''));
+    if (reg && typeof reg === 'object' && 'displayName' in reg) displayName = (reg as any).displayName;
+    regDb.close();
 
     // Check for STOP opt-out
     if (body.trim().toUpperCase() === 'STOP') {
-      // Mark user as unsubscribed in registrations.json
-      try {
-        const registrationsFile = path.join(process.cwd(), 'registrations.json');
-        if (fs.existsSync(registrationsFile)) {
-          const registrations = JSON.parse(fs.readFileSync(registrationsFile, 'utf-8'));
-          const normalizedFrom = from.replace(/\D/g, '').replace(/^1/, '');
-          for (const reg of registrations) {
-            if (reg.phone && reg.phone.replace(/\D/g, '') === normalizedFrom) {
-              reg.unsubscribed = true;
-              reg.unsubscribedDate = new Date().toISOString();
-            }
-          }
-          fs.writeFileSync(registrationsFile, JSON.stringify(registrations, null, 2), 'utf-8');
-        }
-      } catch {}
+      // Mark user as unsubscribed in registrations.db
+      const regDb2 = new Database(path.join(process.cwd(), 'registrations.db'));
+      regDb2.prepare('UPDATE registrations SET unsubscribed = 1, unsubscribedDate = ? WHERE REPLACE(REPLACE(phone, \'-\', \'\'), \'(\', \'\') = ?')
+        .run(new Date().toISOString(), from.replace(/\D/g, '').replace(/^1/, ''));
+      regDb2.close();
       // Remove all reviews from this user
-      try {
-        let reviews = [];
-        if (fs.existsSync(REVIEWS_PATH)) {
-          reviews = JSON.parse(fs.readFileSync(REVIEWS_PATH, 'utf-8'));
-        }
-        const normalizedFrom = from.replace(/\D/g, '').replace(/^1/, '');
-        reviews = reviews.filter((r: any) => !(r.from && r.from.replace(/\D/g, '').replace(/^1/, '') === normalizedFrom));
-        fs.writeFileSync(REVIEWS_PATH, JSON.stringify(reviews, null, 2), 'utf-8');
-      } catch {}
+      const db = new Database(path.join(process.cwd(), 'reviews.db'));
+      db.prepare('DELETE FROM reviews WHERE REPLACE(REPLACE("from", \'-\', \'\'), \'(\', \'\') = ?')
+        .run(from.replace(/\D/g, '').replace(/^1/, ''));
+      db.close();
       return new NextResponse('You have been unsubscribed from Puddy Pictures Movie Club.', { status: 200 });
     }
 
     // Add new review
-    reviews.push({ from, to, code, review, displayName, raw: body, timestamp });
-    fs.writeFileSync(REVIEWS_PATH, JSON.stringify(reviews, null, 2));
+    const db = new Database(path.join(process.cwd(), 'reviews.db'));
+    db.prepare('INSERT INTO reviews ("from", "to", code, review, displayName, raw, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .run(from, to, code, review, displayName, body, timestamp);
+    db.close();
 
     // Respond with success (Twilio expects a 200 OK)
     return new NextResponse('Review received. Thank you!', { status: 200 });

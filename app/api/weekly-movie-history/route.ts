@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
+import Database from 'better-sqlite3';
 import path from 'path';
 
-const HISTORY_PATH = path.join(process.cwd(), 'weekly-movie-history.json');
+const HISTORY_PATH = path.join(process.cwd(), 'weekly-movie-history.db');
 
 // GET: fetch the weekly movie history (admin only)
 export async function GET(req: NextRequest) {
@@ -12,11 +12,9 @@ export async function GET(req: NextRequest) {
     return new NextResponse('Unauthorized', { status: 401 });
   }
   try {
-    if (!fs.existsSync(HISTORY_PATH)) {
-      return NextResponse.json([]);
-    }
-    const file = fs.readFileSync(HISTORY_PATH, 'utf-8');
-    const data = JSON.parse(file);
+    const db = new Database(HISTORY_PATH);
+    const data = db.prepare('SELECT * FROM weekly_movie_history ORDER BY id DESC').all();
+    db.close();
     return NextResponse.json(data);
   } catch (e) {
     return NextResponse.json({ error: 'Could not load history' }, { status: 500 });
