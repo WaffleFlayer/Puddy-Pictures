@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
+import Database from 'better-sqlite3';
 import path from 'path';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'changeme'; // Set this in your .env file
@@ -13,11 +13,9 @@ export async function GET(req: NextRequest) {
   if (!checkAdminPassword(req)) {
     return new NextResponse('Unauthorized', { status: 401 });
   }
-  const registrationsFile = path.join(process.cwd(), 'registrations.json');
-  let registrations = [];
-  if (fs.existsSync(registrationsFile)) {
-    registrations = JSON.parse(fs.readFileSync(registrationsFile, 'utf-8'));
-  }
+  const db = new Database(path.join(process.cwd(), 'registrations.db'));
+  const registrations = db.prepare('SELECT * FROM registrations').all();
+  db.close();
   return NextResponse.json(registrations);
 }
 
@@ -26,12 +24,9 @@ export async function DELETE(req: NextRequest) {
     return new NextResponse('Unauthorized', { status: 401 });
   }
   const { phone } = await req.json();
-  const registrationsFile = path.join(process.cwd(), 'registrations.json');
-  let registrations = [];
-  if (fs.existsSync(registrationsFile)) {
-    registrations = JSON.parse(fs.readFileSync(registrationsFile, 'utf-8'));
-  }
-  const newRegistrations = registrations.filter((r: any) => r.phone !== phone);
-  fs.writeFileSync(registrationsFile, JSON.stringify(newRegistrations, null, 2), 'utf-8');
-  return NextResponse.json({ success: true });
+  const db = new Database(path.join(process.cwd(), 'registrations.db'));
+  db.prepare('DELETE FROM registrations WHERE phone = ?').run(phone);
+  const registrations = db.prepare('SELECT * FROM registrations').all();
+  db.close();
+  return NextResponse.json({ success: true, registrations });
 }
