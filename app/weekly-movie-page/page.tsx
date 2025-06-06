@@ -308,12 +308,18 @@ export default function WeeklyMovieAdmin() {
     setSaving(true);
     setSaveStatus("");
     try {
+      // Ensure both year and release_year are present
+      const movieToSave = {
+        ...result,
+        year: result.release_year || "",
+        release_year: result.release_year || ""
+      };
       const res = await fetch("/api/weekly-movie", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(result), // result now includes ai_intro
+        body: JSON.stringify(movieToSave),
       });
       if (!res.ok) throw new Error("Failed to save");
       setSaveStatus("Weekly movie set!");

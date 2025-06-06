@@ -31,13 +31,19 @@ export default function Signup() {
       setError("");
       if (value.trim()) {
         setCheckingDisplayName(true);
-        // Check uniqueness via API
-        const res = await fetch(`/api/register-user?displayName=${encodeURIComponent(value.trim())}`);
-        const data = await res.json();
-        if (data.taken) {
-          setError("That display name is already taken. Please choose another.");
+        try {
+          // Check uniqueness via API
+          const res = await fetch(`/api/register-user?displayName=${encodeURIComponent(value.trim())}`);
+          if (!res.ok) throw new Error('Network error');
+          const data = await res.json();
+          if (data.taken) {
+            setError("That display name is already taken. Please choose another.");
+          }
+        } catch (err) {
+          setError("Could not check display name. Please try again.");
+        } finally {
+          setCheckingDisplayName(false);
         }
-        setCheckingDisplayName(false);
       }
     } else {
       setForm((prev) => ({
