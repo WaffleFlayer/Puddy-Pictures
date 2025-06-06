@@ -41,10 +41,9 @@ export default function AdminSubscribers() {
       });
   }, []);
 
-  // On mount, check for saved admin_pw in sessionStorage
+  // Remove sessionStorage password logic
   useEffect(() => {
-    setPw("");
-    setPwOk(true);
+    // No-op: password logic removed
   }, []);
 
   const handleDelete = async (phone: string) => {
