@@ -18,22 +18,13 @@ export default function AdminSubscribers() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Password protection state
-  const [pw, setPw] = useState("");
-  const [pwOk, setPwOk] = useState(false);
-  const [pwError, setPwError] = useState("");
-
-  // Helper to fetch with admin password header
+  // Remove password logic from fetchWithPassword
   const fetchWithPassword = async (url: string, options: any = {}) => {
-    const headers = options.headers || {};
-    if (pw) headers['x-admin-password'] = pw;
-    options.headers = headers;
     return fetch(url, options);
   };
 
   // Fetch subscribers with password header after login
   useEffect(() => {
-    if (!pwOk) return;
     setLoading(true);
     fetchWithPassword('/api/admin-subscribers')
       .then(async r => {
@@ -48,23 +39,13 @@ export default function AdminSubscribers() {
         setError('Could not load subscribers.');
         setLoading(false);
       });
-  }, [pwOk]);
+  }, []);
 
   // On mount, check for saved admin_pw in sessionStorage
   useEffect(() => {
-    const savedPw = sessionStorage.getItem('admin_pw');
-    if (savedPw) {
-      setPw(savedPw);
-      setPwOk(false); // Always require re-check on reload for security
-    }
+    setPw("");
+    setPwOk(true);
   }, []);
-
-  // When pwOk and pw are set, save to sessionStorage
-  useEffect(() => {
-    if (pwOk && pw) {
-      sessionStorage.setItem('admin_pw', pw);
-    }
-  }, [pwOk, pw]);
 
   const handleDelete = async (phone: string) => {
     if (!window.confirm('Are you sure you want to remove this subscriber?')) return;
@@ -103,45 +84,6 @@ export default function AdminSubscribers() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
-
-  if (!pwOk) {
-    const tryPassword = async () => {
-      try {
-        const res = await fetchWithPassword('/api/admin-subscribers');
-        if (res.ok) {
-          setPwOk(true);
-          setPwError("");
-          sessionStorage.setItem('admin_pw', pw);
-        } else {
-          setPwError("Incorrect password.");
-        }
-      } catch {
-        setPwError("Server error.");
-      }
-    };
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#181c2b] text-[#eaf6fb] font-retro">
-        <div className="bg-[#23243a] border-4 border-[#00fff7] rounded-3xl p-10 max-w-md w-full flex flex-col items-center">
-          <h1 className="text-3xl font-extrabold text-[#00fff7] mb-6">Admin Access</h1>
-          <input
-            type="password"
-            value={pw}
-            onChange={e => { setPw(e.target.value); setPwError(""); }}
-            placeholder="Enter admin password"
-            className="w-full p-3 rounded bg-[#1a2233] border-2 border-[#00fff7] text-[#eaf6fb] mb-4 text-lg text-center"
-            onKeyDown={e => { if (e.key === 'Enter') { tryPassword(); }}}
-          />
-          <button
-            className="px-8 py-2 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-bold rounded shadow border-2 border-[#00fff7] text-lg"
-            onClick={tryPassword}
-          >
-            Enter
-          </button>
-          {pwError && <div className="mt-4 text-[#ff00c8]">{pwError}</div>}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <>

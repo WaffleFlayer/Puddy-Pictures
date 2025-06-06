@@ -152,11 +152,6 @@ function WeeklyMovieBox({ movie }: { movie: any }) {
 }
 
 export default function WeeklyMovieAdmin() {
-  // Password protection state
-  const [pw, setPw] = useState("");
-  const [pwOk, setPwOk] = useState(false);
-  const [pwError, setPwError] = useState("");
-
   const [movie, setMovie] = useState<any>(null);
   const [form, setForm] = useState<any>({});
   const [status, setStatus] = useState('');
@@ -176,41 +171,19 @@ export default function WeeklyMovieAdmin() {
   // --- Weekly Movie History ---
   const [history, setHistory] = useState<any[]>([]);
   useEffect(() => {
-    if (!pwOk) return;
-    fetch('/api/weekly-movie-history', {
-      headers: { 'x-admin-password': pw }
-    })
+    fetch('/api/weekly-movie-history')
       .then(r => r.ok ? r.json() : [])
       .then(setHistory)
       .catch(() => setHistory([]));
-  }, [pwOk, saveStatus]);
+  }, [saveStatus]);
 
-  // Store password in sessionStorage for session persistence
-  useEffect(() => {
-    const savedPw = sessionStorage.getItem('admin_pw');
-    if (savedPw) {
-      setPw(savedPw);
-      setPwOk(false); // Always require re-check on reload for security
-    }
-  }, []);
-
-  useEffect(() => {
-    if (pwOk && pw) {
-      sessionStorage.setItem('admin_pw', pw);
-    }
-  }, [pwOk, pw]);
-
-  // Helper to fetch with admin password header
+  // Remove password logic from fetchWithPassword
   const fetchWithPassword = async (url: string, options: any = {}) => {
-    const headers = options.headers || {};
-    if (pw) headers['x-admin-password'] = pw;
-    options.headers = headers;
     return fetch(url, options);
   };
 
   // Fetch weekly movie with password header after login
   useEffect(() => {
-    if (!pwOk) return;
     fetchWithPassword('/api/weekly-movie')
       .then(async r => {
         if (!r.ok) throw new Error('Unauthorized or error');
@@ -218,47 +191,7 @@ export default function WeeklyMovieAdmin() {
       })
       .then(data => { if (!data.error) setMovie(data); })
       .catch(() => setMovie(null));
-  }, [pwOk]);
-
-  // Password gate
-  if (!pwOk) {
-    const tryPassword = async () => {
-      try {
-        const res = await fetchWithPassword('/api/weekly-movie');
-        if (res.ok) {
-          setPwOk(true);
-          setPwError("");
-          sessionStorage.setItem('admin_pw', pw);
-        } else {
-          setPwError("Incorrect password.");
-        }
-      } catch {
-        setPwError("Server error.");
-      }
-    };
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#181c2b] text-[#eaf6fb] font-retro">
-        <div className="bg-[#23243a] border-4 border-[#00fff7] rounded-3xl p-10 max-w-md w-full flex flex-col items-center">
-          <h1 className="text-3xl font-extrabold text-[#00fff7] mb-6">Admin Access</h1>
-          <input
-            type="password"
-            value={pw}
-            onChange={e => { setPw(e.target.value); setPwError(""); }}
-            placeholder="Enter admin password"
-            className="w-full p-3 rounded bg-[#1a2233] border-2 border-[#00fff7] text-[#eaf6fb] mb-4 text-lg text-center"
-            onKeyDown={e => { if (e.key === 'Enter') { tryPassword(); }}}
-          />
-          <button
-            className="px-8 py-2 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-bold rounded shadow border-2 border-[#00fff7] text-lg"
-            onClick={tryPassword}
-          >
-            Enter
-          </button>
-          {pwError && <div className="mt-4 text-[#ff00c8]">{pwError}</div>}
-        </div>
-      </div>
-    );
-  }
+  }, []);
 
   // Spin logic (now using slot machine animation)
   // --- Modified runSequence for slot animation ---
@@ -379,7 +312,6 @@ export default function WeeklyMovieAdmin() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-admin-password": pw // Add admin password header for POST
         },
         body: JSON.stringify(result), // result now includes ai_intro
       });
@@ -399,7 +331,6 @@ export default function WeeklyMovieAdmin() {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-password': pw
         },
         body: JSON.stringify({ index })
       });

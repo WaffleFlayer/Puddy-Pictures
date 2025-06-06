@@ -34,9 +34,6 @@ export async function GET(req: NextRequest) {
 
 // POST: set the weekly movie (admin/automation, password required)
 export async function POST(req: NextRequest) {
-  if (!checkAdminPassword(req)) {
-    return new NextResponse('Unauthorized', { status: 401 });
-  }
   try {
     const body = await req.json();
     if (!body || !body.code || !body.title) {
