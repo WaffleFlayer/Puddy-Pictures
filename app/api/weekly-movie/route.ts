@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '../../../utils/postgres';
 import crypto from 'crypto';
+import twilio from 'twilio';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 
@@ -18,6 +19,22 @@ function checkAdminPassword(req: NextRequest) {
 
 const WEEKLY_MOVIE_FIELDS = 'id, title, year, country, director, description, watch_info, region, genre, decade, budget, release_year, poster_url, code, ai_intro';
 const HISTORY_FIELDS = WEEKLY_MOVIE_FIELDS + ', timestamp';
+
+// Helper to generate SMS preview (copied from admin page)
+function getSMSPreview(movie: any, intro: string) {
+  const wittyIntro = movie.ai_intro || intro || '';
+  return `${wittyIntro}\n\n` +
+    `Title: ${movie.title}\n` +
+    `Year: ${movie.release_year}\n` +
+    `Description: ${movie.description}\n` +
+    `Director: ${movie.director}\n` +
+    `Country: ${movie.country}\n` +
+    `Genre: ${movie.genre}\n` +
+    `Budget: ${movie.budget}\n` +
+    `Where to watch: ${movie.watch_info}\n` +
+    `Review code: ${movie.code}\n` +
+    `Reply to the club SMS with this code at the start of your review!`;
+}
 
 // GET: fetch the current weekly movie (public, no password required)
 export async function GET(req: NextRequest) {
@@ -57,6 +74,31 @@ export async function POST(req: NextRequest) {
     if (ids.length === 50) {
       const minId = ids[ids.length - 1].id;
       await pool.query('DELETE FROM weekly_movie_history WHERE id < $1', [minId]);
+    }
+    // --- Send SMS to all active subscribers ---
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const fromNumber = process.env.TWILIO_PHONE_NUMBER;
+    if (accountSid && authToken && fromNumber) {
+      const client = twilio(accountSid, authToken);
+      const { rows: registrations } = await pool.query('SELECT phone FROM registrations WHERE unsubscribed = false OR unsubscribed IS NULL');
+      // Use the same preview logic as the admin page
+      const smsText = getSMSPreview(body, body.ai_intro || '');
+      for (const sub of registrations) {
+        if (!sub.phone) continue;
+        try {
+          await client.messages.create({
+            body: smsText,
+            from: fromNumber,
+            to: sub.phone,
+            mediaUrl: body.poster_url ? [body.poster_url] : undefined
+          });
+        } catch (err) {
+          // Log but do not fail the request
+          const errorMsg = err instanceof Error ? err.message : String(err);
+          console.error(`Failed to send to ${sub.phone}:`, errorMsg);
+        }
+      }
     }
     // ---
     return NextResponse.json({ success: true });

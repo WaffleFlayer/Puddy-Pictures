@@ -2,6 +2,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 
 interface Registration {
   name: string;
@@ -11,6 +12,35 @@ interface Registration {
   date: string;
   unsubscribed?: boolean;
   unsubscribedDate?: string;
+}
+
+function AdminNav() {
+  return (
+    <header className="w-full flex flex-col items-center py-6 bg-gradient-to-r from-[#181c2b] via-[#23243a] to-[#181c2b] shadow-lg border-b-4 border-[#00fff7] mb-10">
+      <nav className="flex flex-wrap gap-8 justify-center items-center">
+        <Link href="/" className="text-2xl font-extrabold text-[#00fff7] hover:text-[#ff00c8] transition">Public Home</Link>
+        <Link href="/admin" className="text-2xl font-extrabold text-[#00fff7] hover:text-[#ff00c8] transition">Admin Home</Link>
+        <Link href="/weekly-movie-page" className="text-2xl font-extrabold text-[#00fff7] hover:text-[#ff00c8] transition">Weekly Movie</Link>
+        <Link href="/admin-subscribers" className="text-2xl font-extrabold text-[#00fff7] hover:text-[#ff00c8] transition">Subscribers</Link>
+        <Link href="/export-registrations" className="text-2xl font-extrabold text-[#00fff7] hover:text-[#ff00c8] transition">Export</Link>
+      </nav>
+    </header>
+  );
+}
+
+function AdminFooter() {
+  return (
+    <footer className="w-full flex flex-col items-center py-6 bg-gradient-to-r from-[#23243a] via-[#181c2b] to-[#23243a] shadow-inner border-t-4 border-[#ff00c8] mt-16">
+      <nav className="flex flex-wrap gap-8 justify-center items-center">
+        <Link href="/" className="text-lg font-bold text-[#ff00c8] hover:text-[#00fff7] transition">Public Home</Link>
+        <Link href="/admin" className="text-lg font-bold text-[#ff00c8] hover:text-[#00fff7] transition">Admin Home</Link>
+        <Link href="/weekly-movie-page" className="text-lg font-bold text-[#ff00c8] hover:text-[#00fff7] transition">Weekly Movie</Link>
+        <Link href="/admin-subscribers" className="text-lg font-bold text-[#ff00c8] hover:text-[#00fff7] transition">Subscribers</Link>
+        <Link href="/export-registrations" className="text-lg font-bold text-[#ff00c8] hover:text-[#00fff7] transition">Export</Link>
+      </nav>
+      <div className="mt-4 text-xs text-[#a084ff]">&copy; {new Date().getFullYear()} Puddy Pictures Admin</div>
+    </footer>
+  );
 }
 
 export default function AdminSubscribers() {
@@ -89,87 +119,78 @@ export default function AdminSubscribers() {
       <Head>
         <title>Puddy Pictures</title>
       </Head>
-      <div className="min-h-screen bg-[#181c2b] text-[#eaf6fb] p-8 font-retro flex flex-col items-center">
-        <nav className="w-full flex items-center justify-between px-8 py-4 bg-[#23243a]/90 shadow-lg z-10 border-b-4 border-[#00fff7] mb-8">
-          <div className="flex items-center gap-3">
-            <img src="/globe.svg" alt="Puddy Pictures Logo" className="h-10 w-10 animate-spin-slow" />
-            <span className="text-3xl font-extrabold tracking-tight text-[#00fff7] font-retro italic" style={{letterSpacing:'-1px'}}>Puddy Pictures</span>
-          </div>
-          <div className="flex gap-8 text-lg">
-            <a href="/" className="hover:text-[#ff00c8] transition font-semibold">Home</a>
-            <a href="/privacy" className="hover:text-[#ff00c8] transition font-semibold">Privacy</a>
-            <a href="/terms" className="hover:text-[#ff00c8] transition font-semibold">Terms</a>
-            <a href="/signup" className="hover:text-[#ff00c8] transition font-semibold">Sign Up</a>
-            <a href="/weekly-movie-page" className="hover:text-[#ff00c8] transition font-semibold">Weekly Movie Roll Admin</a>
-          </div>
-        </nav>
-        <h1 className="text-4xl font-extrabold text-[#00fff7] mb-6">Movie Club Subscribers</h1>
-        <div className="mb-6 w-full flex justify-end">
-          <button
-            className="px-6 py-2 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-bold rounded shadow border-2 border-[#00fff7] text-lg hover:from-[#ff00c8] hover:to-[#00fff7] transition"
-            onClick={async () => {
-              try {
-                const res = await fetch('/api/export-registrations');
-                if (!res.ok) {
-                  alert('Server error while exporting subscribers.');
-                  return;
+      <div className="min-h-screen bg-[#181c2b] text-[#eaf6fb] font-retro">
+        <AdminNav />
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <h1 className="text-4xl font-extrabold text-[#00fff7] mb-6">Movie Club Subscribers</h1>
+          <div className="mb-6 w-full flex justify-end">
+            <button
+              className="px-6 py-2 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-bold rounded shadow border-2 border-[#00fff7] text-lg hover:from-[#ff00c8] hover:to-[#00fff7] transition"
+              onClick={async () => {
+                try {
+                  const res = await fetch('/api/export-registrations');
+                  if (!res.ok) {
+                    alert('Server error while exporting subscribers.');
+                    return;
+                  }
+                  const data = await res.json();
+                  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'subscribers.json';
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                } catch {
+                  alert('Failed to export subscribers.');
                 }
-                const data = await res.json();
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'subscribers.json';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-              } catch {
-                alert('Failed to export subscribers.');
-              }
-            }}
-          >
-            Export Subscribers (JSON)
-          </button>
-        </div>
-        {loading && <div>Loading...</div>}
-        {error && <div className="text-[#ff00c8]">{error}</div>}
-        {!loading && !error && (
-          <table className="w-full max-w-2xl bg-[#23243a] border-4 border-[#00fff7] rounded-2xl shadow-xl">
-            <thead>
-              <tr className="text-left text-[#00fff7] border-b-2 border-[#00fff7]">
-                <th className="p-3">Name</th>
-                <th className="p-3">Display Name</th>
-                <th className="p-3">Phone</th>
-                <th className="p-3">Consent</th>
-                <th className="p-3">Date</th>
-                <th className="p-3">Status</th>
-                <th className="p-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {subs.map((s, i) => (
-                <tr key={i} className={`border-b border-[#23243a] hover:bg-[#1a2233] whitespace-nowrap ${s.unsubscribed ? 'opacity-50' : ''}`}>
-                  <td className="p-2 overflow-hidden text-ellipsis max-w-[180px]">{s.name}</td>
-                  <td className="p-2 overflow-hidden text-ellipsis max-w-[140px]">{s.displayName || ''}</td>
-                  <td className="p-2 overflow-hidden text-ellipsis max-w-[140px]">{s.phone}</td>
-                  <td className="p-2">{s.consent ? 'Yes' : 'No'}</td>
-                  <td className="p-2 overflow-hidden text-ellipsis max-w-[180px]">{new Date(s.date).toLocaleString()}</td>
-                  <td className="p-2">{s.unsubscribed ? `Unsubscribed${s.unsubscribedDate ? ' (' + new Date(s.unsubscribedDate).toLocaleDateString() + ')' : ''}` : 'Active'}</td>
-                  <td className="p-2 text-right">
-                    <button
-                      className="px-3 py-1 bg-[#ff00c8] text-white rounded hover:bg-[#a084ff] text-xs font-bold transition"
-                      onClick={() => handleDelete(s.phone)}
-                      disabled={s.unsubscribed}
-                    >
-                      Remove
-                    </button>
-                  </td>
+              }}
+            >
+              Export Subscribers (JSON)
+            </button>
+          </div>
+          {loading && <div>Loading...</div>}
+          {error && <div className="text-[#ff00c8]">{error}</div>}
+          {!loading && !error && (
+            <table className="w-full max-w-2xl bg-[#23243a] border-4 border-[#00fff7] rounded-2xl shadow-xl">
+              <thead>
+                <tr className="text-left text-[#00fff7] border-b-2 border-[#00fff7]">
+                  <th className="p-3">Name</th>
+                  <th className="p-3">Display Name</th>
+                  <th className="p-3">Phone</th>
+                  <th className="p-3">Consent</th>
+                  <th className="p-3">Date</th>
+                  <th className="p-3">Status</th>
+                  <th className="p-3 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+              </thead>
+              <tbody>
+                {subs.map((s, i) => (
+                  <tr key={i} className={`border-b border-[#23243a] hover:bg-[#1a2233] whitespace-nowrap ${s.unsubscribed ? 'opacity-50' : ''}`}>
+                    <td className="p-2 overflow-hidden text-ellipsis max-w-[180px]">{s.name}</td>
+                    <td className="p-2 overflow-hidden text-ellipsis max-w-[140px]">{s.displayName || ''}</td>
+                    <td className="p-2 overflow-hidden text-ellipsis max-w-[140px]">{s.phone}</td>
+                    <td className="p-2">{s.consent ? 'Yes' : 'No'}</td>
+                    <td className="p-2 overflow-hidden text-ellipsis max-w-[180px]">{new Date(s.date).toLocaleString()}</td>
+                    <td className="p-2">{s.unsubscribed ? `Unsubscribed${s.unsubscribedDate ? ' (' + new Date(s.unsubscribedDate).toLocaleDateString() + ')' : ''}` : 'Active'}</td>
+                    <td className="p-2 text-right">
+                      <button
+                        className="px-3 py-1 bg-[#ff00c8] text-white rounded hover:bg-[#a084ff] text-xs font-bold transition"
+                        onClick={() => handleDelete(s.phone)}
+                        disabled={s.unsubscribed}
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+        <AdminFooter />
       </div>
     </>
   );

@@ -52,11 +52,12 @@ export async function POST(req: NextRequest) {
     budget = budgets[Math.floor(Math.random() * budgets.length)] as keyof typeof budgetRanges;
   }
 
-  const prompt = `You are a helpful assistant that suggests a movie strictly based on:\n` +
+  const prompt = `You are a helpful assistant that suggests a MOVIE (not a TV show, not a miniseries, not a documentary series) strictly based on:\n` +
     `- Region: ${region}\n` +
     `- Genre: ${genre}\n` +
     `- Decade: ${decade}\n` +
     `- Budget: ${budgetRanges[budget as keyof typeof budgetRanges]}\n\n` +
+    `Do NOT suggest TV shows, miniseries, or anything that is not a feature film/movie.\n` +
     `Reply with a JSON object containing:\n{\n  "title": string,\n  "year": string,\n  "country": string,\n  "director": string,\n  "description": string,\n  "watch_info": string\n}\n\nReturn only valid JSON.`;
 
   try {

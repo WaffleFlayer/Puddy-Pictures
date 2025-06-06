@@ -62,3 +62,12 @@ CREATE TABLE IF NOT EXISTS weekly_movie_history (
   ai_intro TEXT,
   timestamp TEXT
 );
+
+-- Weekly movie schedule table
+CREATE TABLE IF NOT EXISTS weekly_movie_schedule (
+  id SERIAL PRIMARY KEY,
+  day_of_week TEXT NOT NULL,
+  time_of_day TEXT NOT NULL,
+  frequency TEXT NOT NULL,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

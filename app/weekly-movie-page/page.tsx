@@ -2,6 +2,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 
 type PickerType = "region" | "genre" | "decade" | "budget";
 type Selections = Partial<Record<PickerType, string>>;
@@ -148,6 +149,35 @@ function WeeklyMovieBox({ movie }: { movie: any }) {
       <div className="mb-2 text-[#a084ff]">Review Code: <span className="font-mono">{movie.code}</span></div>
       <div className="mb-2 text-[#00fff7]">Reply to the club SMS with this code at the start of your review!</div>
     </div>
+  );
+}
+
+function AdminNav() {
+  return (
+    <header className="w-full flex flex-col items-center py-6 bg-gradient-to-r from-[#181c2b] via-[#23243a] to-[#181c2b] shadow-lg border-b-4 border-[#00fff7] mb-10">
+      <nav className="flex flex-wrap gap-8 justify-center items-center">
+        <Link href="/" className="text-2xl font-extrabold text-[#00fff7] hover:text-[#ff00c8] transition">Public Home</Link>
+        <Link href="/admin" className="text-2xl font-extrabold text-[#00fff7] hover:text-[#ff00c8] transition">Admin Home</Link>
+        <Link href="/weekly-movie-page" className="text-2xl font-extrabold text-[#00fff7] hover:text-[#ff00c8] transition">Weekly Movie</Link>
+        <Link href="/admin-subscribers" className="text-2xl font-extrabold text-[#00fff7] hover:text-[#ff00c8] transition">Subscribers</Link>
+        <Link href="/export-registrations" className="text-2xl font-extrabold text-[#00fff7] hover:text-[#ff00c8] transition">Export</Link>
+      </nav>
+    </header>
+  );
+}
+
+function AdminFooter() {
+  return (
+    <footer className="w-full flex flex-col items-center py-6 bg-gradient-to-r from-[#23243a] via-[#181c2b] to-[#23243a] shadow-inner border-t-4 border-[#ff00c8] mt-16">
+      <nav className="flex flex-wrap gap-8 justify-center items-center">
+        <Link href="/" className="text-lg font-bold text-[#ff00c8] hover:text-[#00fff7] transition">Public Home</Link>
+        <Link href="/admin" className="text-lg font-bold text-[#ff00c8] hover:text-[#00fff7] transition">Admin Home</Link>
+        <Link href="/weekly-movie-page" className="text-lg font-bold text-[#ff00c8] hover:text-[#00fff7] transition">Weekly Movie</Link>
+        <Link href="/admin-subscribers" className="text-lg font-bold text-[#ff00c8] hover:text-[#00fff7] transition">Subscribers</Link>
+        <Link href="/export-registrations" className="text-lg font-bold text-[#ff00c8] hover:text-[#00fff7] transition">Export</Link>
+      </nav>
+      <div className="mt-4 text-xs text-[#a084ff]">&copy; {new Date().getFullYear()} Puddy Pictures Admin</div>
+    </footer>
   );
 }
 
@@ -351,27 +381,76 @@ export default function WeeklyMovieAdmin() {
     }
   };
 
+  // Weekly Movie Text Schedule - Enhanced UI with backend integration
+  const [scheduleDay, setScheduleDay] = useState("Friday");
+  const [scheduleTime, setScheduleTime] = useState("18:00");
+  const [scheduleFrequency, setScheduleFrequency] = useState("Weekly");
+  const [scheduleSaved, setScheduleSaved] = useState(false);
+  const [scheduleLoading, setScheduleLoading] = useState(true);
+
+  // Fetch current schedule from backend
+  useEffect(() => {
+    fetch('/api/weekly-movie-schedule')
+      .then(r => r.json())
+      .then(data => {
+        setScheduleDay(data.day_of_week || "Friday");
+        setScheduleTime(data.time_of_day || "18:00");
+        setScheduleFrequency(data.frequency || "Weekly");
+      })
+      .finally(() => setScheduleLoading(false));
+  }, []);
+
+  const handleScheduleSave = async () => {
+    setScheduleSaved(false);
+    setScheduleLoading(true);
+    await fetch('/api/weekly-movie-schedule', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        day_of_week: scheduleDay,
+        time_of_day: scheduleTime,
+        frequency: scheduleFrequency
+      })
+    });
+    setScheduleSaved(true);
+    setScheduleLoading(false);
+    setTimeout(() => setScheduleSaved(false), 2000);
+  };
+
   return (
     <>
       <Head>
         <title>Puddy Pictures</title>
       </Head>
-      <div className="min-h-screen bg-[#181c2b] text-[#eaf6fb] p-8 font-retro">
-        {/* Navigation Bar */}
-        <nav className="w-full flex items-center justify-between px-8 py-4 bg-[#23243a]/90 shadow-lg z-10 border-b-4 border-[#00fff7] mb-8">
-          <div className="flex items-center gap-3">
-            <img src="/globe.svg" alt="Puddy Pictures Logo" className="h-10 w-10 animate-spin-slow" />
-            <span className="text-3xl font-extrabold tracking-tight text-[#00fff7] font-retro italic" style={{letterSpacing:'-1px'}}>Puddy Pictures</span>
-          </div>
-          <div className="flex gap-8 text-lg">
-            <a href="/" className="hover:text-[#ff00c8] transition font-semibold">Home</a>
-            <a href="/privacy" className="hover:text-[#ff00c8] transition font-semibold">Privacy</a>
-            <a href="/terms" className="hover:text-[#ff00c8] transition font-semibold">Terms</a>
-            <a href="/signup" className="hover:text-[#ff00c8] transition font-semibold">Sign Up</a>
-            <a href="/admin-subscribers" className="hover:text-[#ff00c8] transition font-semibold">Subscribers</a>
-          </div>
-        </nav>
-        <h1 className="text-4xl font-extrabold text-[#00fff7] mb-6">Weekly Movie Admin</h1>
+      <div className="min-h-screen bg-[#181c2b] text-[#eaf6fb] font-retro">
+        <AdminNav />
+        <h1 className="text-4xl font-extrabold text-[#00fff7] mb-6 text-center w-full">Weekly Movie Admin</h1>
+        {/* Weekly Movie Text Schedule - now at the top */}
+        <div className="w-full max-w-3xl mx-auto bg-[#23243a]/98 rounded-3xl shadow-2xl border-4 border-[#00fff7] p-8 flex flex-col gap-8 items-center mt-10 mb-8">
+          <h2 className="text-2xl font-bold text-[#ff00c8] mb-2 text-center">Weekly Movie Text Schedule</h2>
+          <form className="flex flex-col md:flex-row gap-4 items-center justify-center">
+            <label className="text-lg text-[#00fff7] font-bold" htmlFor="schedule-day">Send day:</label>
+            <select id="schedule-day" className="p-2 rounded bg-[#1a2233] border border-[#00fff7] text-[#eaf6fb]" value={scheduleDay} onChange={e => setScheduleDay(e.target.value)} disabled={scheduleLoading}>
+              <option>Sunday</option>
+              <option>Monday</option>
+              <option>Tuesday</option>
+              <option>Wednesday</option>
+              <option>Thursday</option>
+              <option>Friday</option>
+              <option>Saturday</option>
+            </select>
+            <label className="text-lg text-[#00fff7] font-bold ml-4" htmlFor="schedule-time">Send time:</label>
+            <input id="schedule-time" type="time" className="p-2 rounded bg-[#1a2233] border border-[#00fff7] text-[#eaf6fb]" value={scheduleTime} onChange={e => setScheduleTime(e.target.value)} disabled={scheduleLoading} />
+            <label className="text-lg text-[#00fff7] font-bold ml-4" htmlFor="schedule-frequency">Frequency:</label>
+            <select id="schedule-frequency" className="p-2 rounded bg-[#1a2233] border border-[#00fff7] text-[#eaf6fb]" value={scheduleFrequency} onChange={e => setScheduleFrequency(e.target.value)} disabled={scheduleLoading}>
+              <option>Weekly</option>
+              <option>Biweekly</option>
+              <option>Monthly</option>
+            </select>
+          </form>
+          {scheduleLoading && <div className="text-[#a084ff] mt-2">Loading schedule...</div>}
+          <div className="text-sm text-[#a084ff] mt-2 text-center">(This schedule determines when a new movie is selected and texted. Actual automation is handled by a backend job.)</div>
+        </div>
         {/* Wheel UI - now slot machine style */}
         <div className="w-full max-w-2xl mx-auto bg-[#23243a]/95 rounded-3xl shadow-2xl border-4 border-[#00fff7] p-10 flex flex-col items-center gap-8 animate-glow">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
@@ -402,7 +481,7 @@ export default function WeeklyMovieAdmin() {
         </div>
         {/* Result Card and SMS Preview */}
         {result && (
-          <div className="w-full max-w-3xl mx-auto bg-[#23243a]/98 rounded-3xl shadow-2xl border-4 border-[#00fff7] p-12 flex flex-col gap-8 items-center mt-10 animate-fade-in min-h-[420px]">
+          <div className="w-full max-w-3xl mx-auto bg-[#23243a]/98 rounded-3xl shadow-2xl border-4 border-[#00fff7] p-12 flex flex-col gap-8 items-center mt-10">
             {result.poster_url && (
               <img
                 src={result.poster_url}
@@ -522,6 +601,7 @@ export default function WeeklyMovieAdmin() {
             </div>
           </div>
         )}
+        <AdminFooter />
       </div>
     </>
   );
