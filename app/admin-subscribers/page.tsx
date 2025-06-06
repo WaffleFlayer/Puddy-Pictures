@@ -108,14 +108,10 @@ export default function AdminSubscribers() {
           <button
             className="px-6 py-2 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-bold rounded shadow border-2 border-[#00fff7] text-lg hover:from-[#ff00c8] hover:to-[#00fff7] transition"
             onClick={async () => {
-              const pwInput = prompt('Enter admin password to export subscribers:');
-              if (!pwInput) return;
               try {
-                const res = await fetch('/api/export-registrations', {
-                  headers: { 'x-admin-password': pwInput }
-                });
+                const res = await fetch('/api/export-registrations');
                 if (!res.ok) {
-                  alert('Incorrect password or server error.');
+                  alert('Server error while exporting subscribers.');
                   return;
                 }
                 const data = await res.json();
