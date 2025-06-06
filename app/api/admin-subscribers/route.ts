@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Database from 'better-sqlite3';
-import path from 'path';
+import pool from '../../../utils/postgres';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'changeme'; // Set this in your .env file
 
@@ -13,10 +12,8 @@ export async function GET(req: NextRequest) {
   if (!checkAdminPassword(req)) {
     return new NextResponse('Unauthorized', { status: 401 });
   }
-  const db = new Database(path.join(process.cwd(), 'registrations.db'));
-  const registrations = db.prepare('SELECT * FROM registrations').all();
-  db.close();
-  return NextResponse.json(registrations);
+  const { rows } = await pool.query('SELECT * FROM registrations');
+  return NextResponse.json(rows);
 }
 
 export async function DELETE(req: NextRequest) {
@@ -24,9 +21,7 @@ export async function DELETE(req: NextRequest) {
     return new NextResponse('Unauthorized', { status: 401 });
   }
   const { phone } = await req.json();
-  const db = new Database(path.join(process.cwd(), 'registrations.db'));
-  db.prepare('DELETE FROM registrations WHERE phone = ?').run(phone);
-  const registrations = db.prepare('SELECT * FROM registrations').all();
-  db.close();
-  return NextResponse.json({ success: true, registrations });
+  await pool.query('DELETE FROM registrations WHERE phone = $1', [phone]);
+  const { rows } = await pool.query('SELECT * FROM registrations');
+  return NextResponse.json({ success: true, registrations: rows });
 }

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Database from 'better-sqlite3';
-import path from 'path';
 import twilio from 'twilio';
 import dotenv from 'dotenv';
+import pool from '../../../utils/postgres';
+
 dotenv.config();
 
 export async function GET(req: NextRequest) {
@@ -10,10 +10,8 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const displayName = searchParams.get('displayName');
   if (displayName) {
-    const db = new Database(path.join(process.cwd(), 'registrations.db'));
-    const row = db.prepare('SELECT 1 FROM registrations WHERE LOWER(displayName) = ? LIMIT 1').get(displayName.trim().toLowerCase());
-    db.close();
-    return NextResponse.json({ taken: !!row });
+    const { rows } = await pool.query('SELECT 1 FROM registrations WHERE LOWER(displayName) = $1 LIMIT 1', [displayName.trim().toLowerCase()]);
+    return NextResponse.json({ taken: rows.length > 0 });
   }
   return NextResponse.json({});
 }
@@ -29,18 +27,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Consent required to register.' }, { status: 400 });
   }
 
-  const db = new Database(path.join(process.cwd(), 'registrations.db'));
   // Check for duplicate displayName
   const displayNameStr = typeof displayName === 'string' ? displayName : '';
-  const exists = db.prepare('SELECT 1 FROM registrations WHERE LOWER(displayName) = ? LIMIT 1').get(displayNameStr.trim().toLowerCase());
-  if (exists) {
-    db.close();
+  const { rows: existsRows } = await pool.query('SELECT 1 FROM registrations WHERE LOWER(displayName) = $1 LIMIT 1', [displayNameStr.trim().toLowerCase()]);
+  if (displayNameStr && existsRows.length > 0) {
     return NextResponse.json({ error: 'Display name already taken.' }, { status: 400 });
   }
 
-  db.prepare('INSERT INTO registrations (name, displayName, phone, consent, date) VALUES (?, ?, ?, ?, ?)')
-    .run(name, displayNameStr, phone, 1, new Date().toISOString());
-  db.close();
+  await pool.query(
+    'INSERT INTO registrations (name, displayName, phone, consent, date, unsubscribed) VALUES ($1, $2, $3, $4, $5, $6)',
+    [name, displayNameStr, phone, true, new Date().toISOString(), 0]
+  );
 
   // Send welcome text via Twilio
   if (typeof phone === 'string' && phone.trim()) {

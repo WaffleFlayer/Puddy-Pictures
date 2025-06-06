@@ -163,6 +163,38 @@ export default function AdminSubscribers() {
           </div>
         </nav>
         <h1 className="text-4xl font-extrabold text-[#00fff7] mb-6">Movie Club Subscribers</h1>
+        <div className="mb-6 w-full flex justify-end">
+          <button
+            className="px-6 py-2 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-bold rounded shadow border-2 border-[#00fff7] text-lg hover:from-[#ff00c8] hover:to-[#00fff7] transition"
+            onClick={async () => {
+              const pwInput = prompt('Enter admin password to export subscribers:');
+              if (!pwInput) return;
+              try {
+                const res = await fetch('/api/export-registrations', {
+                  headers: { 'x-admin-password': pwInput }
+                });
+                if (!res.ok) {
+                  alert('Incorrect password or server error.');
+                  return;
+                }
+                const data = await res.json();
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'subscribers.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+              } catch {
+                alert('Failed to export subscribers.');
+              }
+            }}
+          >
+            Export Subscribers (JSON)
+          </button>
+        </div>
         {loading && <div>Loading...</div>}
         {error && <div className="text-[#ff00c8]">{error}</div>}
         {!loading && !error && (
