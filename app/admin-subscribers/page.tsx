@@ -26,7 +26,7 @@ export default function AdminSubscribers() {
   // Helper to fetch with admin password header
   const fetchWithPassword = async (url: string, options: any = {}) => {
     const headers = options.headers || {};
-    headers['x-admin-password'] = pw;
+    if (pw) headers['x-admin-password'] = pw;
     options.headers = headers;
     return fetch(url, options);
   };
@@ -55,7 +55,7 @@ export default function AdminSubscribers() {
     const savedPw = sessionStorage.getItem('admin_pw');
     if (savedPw) {
       setPw(savedPw);
-      setPwOk(true);
+      setPwOk(false); // Always require re-check on reload for security
     }
   }, []);
 

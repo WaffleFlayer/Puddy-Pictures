@@ -190,7 +190,7 @@ export default function WeeklyMovieAdmin() {
     const savedPw = sessionStorage.getItem('admin_pw');
     if (savedPw) {
       setPw(savedPw);
-      setPwOk(true);
+      setPwOk(false); // Always require re-check on reload for security
     }
   }, []);
 
@@ -203,7 +203,7 @@ export default function WeeklyMovieAdmin() {
   // Helper to fetch with admin password header
   const fetchWithPassword = async (url: string, options: any = {}) => {
     const headers = options.headers || {};
-    headers['x-admin-password'] = pw;
+    if (pw) headers['x-admin-password'] = pw;
     options.headers = headers;
     return fetch(url, options);
   };
