@@ -12,6 +12,7 @@ require('dotenv').config();
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const fromNumber = process.env.TWILIO_PHONE_NUMBER;
+const baseUrl = process.env.PUBLIC_BASE_URL || 'http://localhost:3000';
 if (!accountSid || !authToken || !fromNumber) {
   console.error('Missing Twilio environment variables.');
   process.exit(1);
@@ -60,7 +61,7 @@ async function rollNewRandomMovie() {
     selections[type] = options[Math.floor(Math.random() * options.length)];
   }
   // 2. Call the same API as the admin UI to generate a movie
-  const res = await fetch('http://localhost:3000/api/generate-movie', {
+  const res = await fetch(`${baseUrl}/api/generate-movie`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(selections)
@@ -111,7 +112,7 @@ function getSMSPreview(movie, intro) {
 // Helper to fetch witty intro from API
 async function fetchWittyIntro(movie) {
   try {
-    const res = await fetch('http://localhost:3000/api/ai-witty-intro', {
+    const res = await fetch(`${baseUrl}/api/ai-witty-intro`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ movie })
