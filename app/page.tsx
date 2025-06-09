@@ -61,7 +61,8 @@ const wheels: Record<PickerType, string[]> = {
   ],
   rating: ["G", "PG", "PG-13", "R"]
 };
-const order: PickerType[] = ["region", "genre", "decade", "budget", "rating"];
+// Only roll for region, genre, decade, budget
+const order: PickerType[] = ["region", "genre", "decade", "budget"];
 
 export default function Home() {
   const [selections, setSelections] = useState<Selections>({});
@@ -241,10 +242,17 @@ export default function Home() {
     } catch {}
     let movieData: MovieResult | null = null;
     while (true) {
+      // When calling /api/generate-movie, include rating as a filter (not as a rolled value)
+      const ratingFilter = Array.from(filters.rating);
+      const apiBody = { ...newSelections };
+      if (ratingFilter.length > 0 && ratingFilter.length < wheels.rating.length) {
+        // If only one rating, send as string; if multiple, send as array
+        (apiBody as any).rating = ratingFilter.length === 1 ? ratingFilter[0] : ratingFilter;
+      }
       const res = await fetch("/api/generate-movie", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newSelections),
+        body: JSON.stringify(apiBody),
       });
       if (!res.ok) {
         const errorText = await res.text();

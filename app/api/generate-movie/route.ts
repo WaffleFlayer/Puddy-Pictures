@@ -53,8 +53,20 @@ export async function POST(req: NextRequest) {
     const budgets = Object.keys(budgetRanges);
     budget = budgets[Math.floor(Math.random() * budgets.length)] as keyof typeof budgetRanges;
   }
-  if (!rating) {
-    rating = ratingList[Math.floor(Math.random() * ratingList.length)];
+
+  // Accept rating as string or array
+  let allowedRatings: string[] | undefined = undefined;
+  if (Array.isArray(rating)) {
+    allowedRatings = rating;
+    rating = undefined;
+  } else if (typeof rating === 'string') {
+    allowedRatings = [rating];
+  }
+
+  // In prompt, only include rating if allowedRatings is set and not all ratings
+  let ratingPrompt = '';
+  if (allowedRatings && allowedRatings.length > 0 && allowedRatings.length < ratingList.length) {
+    ratingPrompt = `- Rating: ${allowedRatings.join(' or ')}\n`;
   }
 
   const prompt = `You are a helpful assistant that suggests a MOVIE (not a TV show, not a miniseries, not a documentary series) strictly based on:\n` +
@@ -62,7 +74,7 @@ export async function POST(req: NextRequest) {
     `- Genre: ${genre}\n` +
     `- Decade: ${decade}\n` +
     `- Budget: ${budgetRanges[budget as keyof typeof budgetRanges]}\n` +
-    `- Rating: ${rating}\n\n` +
+    ratingPrompt +
     `Do NOT suggest TV shows, miniseries, or anything that is not a feature film/movie.\n` +
     `Reply with a JSON object containing:\n{\n  "title": string,\n  "year": string,\n  "country": string,\n  "director": string,\n  "description": string,\n  "watch_info": string,\n  "rating": string\n}\n\nReturn only valid JSON.`;
 
