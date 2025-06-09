@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Head from 'next/head';
 import Link from "next/link";
 
-type PickerType = "region" | "genre" | "decade" | "budget";
+type PickerType = "region" | "genre" | "decade" | "budget" | "rating";
 
 type Selections = Partial<Record<PickerType, string>>;
 
@@ -20,6 +20,7 @@ type MovieResult = {
   watch_info: string;
   poster_url?: string;
   code?: string; // Add code to MovieResult type
+  rating?: string; // Add rating to MovieResult type
 };
 
 const wheels: Record<PickerType, string[]> = {
@@ -58,8 +59,9 @@ const wheels: Record<PickerType, string[]> = {
     "Studio",
     "Blockbuster",
   ],
+  rating: ["G", "PG", "PG-13", "R"]
 };
-const order: PickerType[] = ["region", "genre", "decade", "budget"];
+const order: PickerType[] = ["region", "genre", "decade", "budget", "rating"];
 
 export default function Home() {
   const [selections, setSelections] = useState<Selections>({});
@@ -107,6 +109,7 @@ export default function Home() {
       genre: new Set(wheels.genre),
       decade: new Set(wheels.decade),
       budget: new Set(wheels.budget),
+      rating: new Set(wheels.rating),
     };
     return initial;
   });
@@ -231,10 +234,10 @@ export default function Home() {
       newSelections = { ...newSelections, [type]: choice };
       setSpinResults((prev) => ([...prev, `${type.charAt(0).toUpperCase() + type.slice(1)}: ${choice}`]));
     }
-    // Prevent duplicate movies in session (re-roll until new movie is found, no user message, no max attempts)
-    let rolledCodes: string[] = [];
+    // Prevent duplicate movies in session (by title+year only, using localStorage for persistence)
+    let rolledTitles: string[] = [];
     try {
-      rolledCodes = JSON.parse(sessionStorage.getItem('puddy_rolled_codes') || '[]');
+      rolledTitles = JSON.parse(localStorage.getItem('puddy_rolled_titles') || '[]');
     } catch {}
     let movieData: MovieResult | null = null;
     while (true) {
@@ -251,11 +254,11 @@ export default function Home() {
         return;
       }
       const data: MovieResult = await res.json();
-      const movieCode = generateMovieCode(data.title, data.release_year);
-      if (!rolledCodes.includes(movieCode)) {
-        movieData = { ...data, code: movieCode };
-        rolledCodes.push(movieCode);
-        sessionStorage.setItem('puddy_rolled_codes', JSON.stringify(rolledCodes));
+      const movieTitleKey = `${data.title?.toLowerCase() || ''}__${data.release_year || ''}`;
+      if (!rolledTitles.includes(movieTitleKey)) {
+        movieData = { ...data };
+        rolledTitles.push(movieTitleKey);
+        localStorage.setItem('puddy_rolled_titles', JSON.stringify(rolledTitles));
         break;
       }
       // Otherwise, try again (infinite loop until a new movie is found)
@@ -306,6 +309,8 @@ export default function Home() {
             <span className="text-[#f3ede7]">{movie.budget}</span>
             <span className="font-bold text-[#00fff7]">Where to watch:</span>
             <span className="text-[#f3ede7]">{movie.watch_info}</span>
+            <span className="font-bold text-[#00fff7]">Rating:</span>
+            <span className="text-[#f3ede7]">{movie.rating || 'N/A'}</span>
           </div>
           <div className="mb-2 text-[#a084ff]">Review Code: <span className="font-mono">{movie.code}</span></div>
           <div className="mb-2 text-[#00fff7]">Reply to the club SMS with this code at the start of your review!</div>
@@ -468,7 +473,7 @@ export default function Home() {
                         className="flex flex-col gap-1"
                         style={{wordBreak:'break-word',maxWidth:'100%'}}
                       >
-                        {(type === 'budget' ? wheels.budget : [...wheels[type]].sort()).map((option) => (
+                        {(type === 'budget' ? wheels.budget : type === 'rating' ? wheels.rating : [...wheels[type]].sort()).map((option) => (
                           <label
                             key={option}
                             className="flex items-center gap-2 text-[#eaf6fb] text-base cursor-pointer px-1 py-0.5 rounded hover:bg-[#23243a] transition"
@@ -550,6 +555,8 @@ export default function Home() {
                         <span className="text-[#f3ede7]">{result.budget}</span>
                         <span className="font-bold text-[#00fff7]">Where to watch:</span>
                         <span className="text-[#f3ede7]">{result.watch_info}</span>
+                        <span className="font-bold text-[#00fff7]">Rating:</span>
+                        <span className="text-[#f3ede7]">{result.rating || 'N/A'}</span>
                       </div>
                     </div>
                   </div>

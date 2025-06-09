@@ -13,6 +13,7 @@ interface MovieInfo {
   decade?: string;
   budget?: string;
   release_year?: string;
+  rating?: string;
 }
 
 const regionCountries: Record<string, string[]> = {
@@ -31,10 +32,11 @@ const budgetRanges = {
 };
 const genreList = ['Drama','Comedy','Horror','Action','Sci-Fi','Romance','Thriller','Animation','Documentary'];
 const decadeList = ['1950s','1960s','1970s','1980s','1990s','2000s','2010s','2020s'];
+const ratingList = ['G', 'PG', 'PG-13', 'R'];
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  let { region, genre, decade, budget } = body;
+  let { region, genre, decade, budget, rating } = body;
 
   // Fallback to random if missing
   if (!region) {
@@ -51,14 +53,18 @@ export async function POST(req: NextRequest) {
     const budgets = Object.keys(budgetRanges);
     budget = budgets[Math.floor(Math.random() * budgets.length)] as keyof typeof budgetRanges;
   }
+  if (!rating) {
+    rating = ratingList[Math.floor(Math.random() * ratingList.length)];
+  }
 
   const prompt = `You are a helpful assistant that suggests a MOVIE (not a TV show, not a miniseries, not a documentary series) strictly based on:\n` +
     `- Region: ${region}\n` +
     `- Genre: ${genre}\n` +
     `- Decade: ${decade}\n` +
-    `- Budget: ${budgetRanges[budget as keyof typeof budgetRanges]}\n\n` +
+    `- Budget: ${budgetRanges[budget as keyof typeof budgetRanges]}\n` +
+    `- Rating: ${rating}\n\n` +
     `Do NOT suggest TV shows, miniseries, or anything that is not a feature film/movie.\n` +
-    `Reply with a JSON object containing:\n{\n  "title": string,\n  "year": string,\n  "country": string,\n  "director": string,\n  "description": string,\n  "watch_info": string\n}\n\nReturn only valid JSON.`;
+    `Reply with a JSON object containing:\n{\n  "title": string,\n  "year": string,\n  "country": string,\n  "director": string,\n  "description": string,\n  "watch_info": string,\n  "rating": string\n}\n\nReturn only valid JSON.`;
 
   try {
     // Dynamically import openai only on the server
@@ -88,6 +94,7 @@ export async function POST(req: NextRequest) {
     movieInfo.decade = decade;
     movieInfo.budget = budget;
     movieInfo.release_year = movieInfo.year;
+    movieInfo.rating = movieInfo.rating || rating;
 
     // Fetch poster from OMDb API if API key is available
     if (process.env.OMDB_API_KEY) {
@@ -98,6 +105,10 @@ export async function POST(req: NextRequest) {
         const omdbData = await omdbRes.json();
         if (omdbData.Poster && omdbData.Poster !== 'N/A') {
           movieInfo.poster_url = omdbData.Poster;
+        }
+        // Try to get rating from OMDb if not present
+        if (!movieInfo.rating && omdbData.Rated) {
+          movieInfo.rating = omdbData.Rated;
         }
       } catch {}
     }
