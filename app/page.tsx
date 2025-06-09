@@ -231,8 +231,13 @@ export default function Home() {
       newSelections = { ...newSelections, [type]: choice };
       setSpinResults((prev) => ([...prev, `${type.charAt(0).toUpperCase() + type.slice(1)}: ${choice}`]));
     }
-    // Use the final selections from the wheel spins
+    // Prevent duplicate movies in session (re-roll until new movie is found, no user message, no max attempts)
+    let rolledCodes: string[] = [];
     try {
+      rolledCodes = JSON.parse(sessionStorage.getItem('puddy_rolled_codes') || '[]');
+    } catch {}
+    let movieData: MovieResult | null = null;
+    while (true) {
       const res = await fetch("/api/generate-movie", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -240,17 +245,23 @@ export default function Home() {
       });
       if (!res.ok) {
         const errorText = await res.text();
-        throw new Error("Server error: " + res.status + " - " + errorText);
+        setError("Server error: " + res.status + " - " + errorText);
+        setShowResult(true);
+        setSpinning(false);
+        return;
       }
       const data: MovieResult = await res.json();
-      // Generate a code for this movie
       const movieCode = generateMovieCode(data.title, data.release_year);
-      setResult({ ...data, code: movieCode });
-      setShowResult(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-      setShowResult(true);
+      if (!rolledCodes.includes(movieCode)) {
+        movieData = { ...data, code: movieCode };
+        rolledCodes.push(movieCode);
+        sessionStorage.setItem('puddy_rolled_codes', JSON.stringify(rolledCodes));
+        break;
+      }
+      // Otherwise, try again (infinite loop until a new movie is found)
     }
+    setResult(movieData);
+    setShowResult(true);
     setSpinning(false);
   };
 
