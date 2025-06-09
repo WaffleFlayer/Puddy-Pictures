@@ -323,6 +323,7 @@ export default function Home() {
     const [history, setHistory] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [openIndexes, setOpenIndexes] = useState<{[key: number]: boolean}>({});
     useEffect(() => {
       fetch('/api/public-weekly-movie-history')
         .then(r => r.ok ? r.json() : Promise.reject('Failed to fetch'))
@@ -331,6 +332,10 @@ export default function Home() {
         .finally(() => setLoading(false));
     }, []);
 
+    const toggleOpen = (idx: number) => {
+      setOpenIndexes(prev => ({ ...prev, [idx]: !prev[idx] }));
+    };
+
     if (loading) return <div className="text-[#00fff7] font-retro text-lg py-6">Loading previous weekly movies...</div>;
     if (error) return <div className="text-[#ff00c8] font-retro text-lg py-6">{error}</div>;
     if (!history.length) return <div className="text-[#a084ff] font-retro text-lg py-6">No previous weekly movies yet.</div>;
@@ -338,9 +343,23 @@ export default function Home() {
     return (
       <div className="w-full max-w-5xl mx-auto mt-10 mb-20">
         <h2 className="text-3xl font-extrabold text-[#00fff7] mb-6 font-retro text-left">Previous Weekly Movies</h2>
-        <div className="flex flex-col gap-10">
+        <div className="flex flex-col gap-4">
           {history.map((movie, idx) => (
-            <PreviousMovieWithReviews key={movie.code || idx} movie={movie} />
+            <div key={movie.code || idx}>
+              <button
+                className={`w-full text-left px-6 py-4 rounded-xl border-2 border-[#00fff7] bg-[#181c2b] text-[#00fff7] font-bold text-xl flex items-center justify-between transition hover:bg-[#23243a] ${openIndexes[idx] ? 'shadow-lg' : ''}`}
+                onClick={() => toggleOpen(idx)}
+                aria-expanded={openIndexes[idx] ? 'true' : 'false'}
+              >
+                <span>{movie.title} <span className="text-lg text-[#fffbe7] font-normal">({movie.release_year})</span></span>
+                <span className={`ml-4 transition-transform ${openIndexes[idx] ? 'rotate-90' : ''}`}>▶</span>
+              </button>
+              {openIndexes[idx] && (
+                <div className="mt-2">
+                  <PreviousMovieWithReviews movie={movie} />
+                </div>
+              )}
+            </div>
           ))}
         </div>
       </div>

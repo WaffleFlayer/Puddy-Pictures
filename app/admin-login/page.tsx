@@ -19,8 +19,8 @@ function AdminLoginInner() {
       body: JSON.stringify({ password })
     });
     if (res.ok) {
-      // Set cookie and redirect
-      router.replace(redirect);
+      // Set cookie and redirect (full reload so httpOnly cookie is sent)
+      window.location.href = redirect;
     } else {
       setError('Incorrect password.');
     }
