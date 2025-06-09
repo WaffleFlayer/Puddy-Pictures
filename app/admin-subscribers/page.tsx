@@ -7,6 +7,7 @@ import Link from 'next/link';
 interface Registration {
   name: string;
   displayName?: string;
+  displayname?: string; // Add this line
   phone: string;
   consent: boolean;
   date: string;
@@ -62,7 +63,11 @@ export default function AdminSubscribers() {
         return r.json();
       })
       .then(data => {
-        setSubs(data);
+        // Map displayname (lowercase) to displayName for all subs
+        setSubs(data.map((s: any) => ({
+          ...s,
+          displayName: s.displayName || s.displayname || '',
+        })));
         setLoading(false);
       })
       .catch(() => {
@@ -170,7 +175,7 @@ export default function AdminSubscribers() {
                 {subs.map((s, i) => (
                   <tr key={i} className={`border-b border-[#23243a] hover:bg-[#1a2233] whitespace-nowrap ${s.unsubscribed ? 'opacity-50' : ''}`}>
                     <td className="p-2 overflow-hidden text-ellipsis max-w-[180px]">{s.name}</td>
-                    <td className="p-2 overflow-hidden text-ellipsis max-w-[140px]">{s.displayName || ''}</td>
+                    <td className="p-2 overflow-hidden text-ellipsis max-w-[140px]">{s.displayName || s.displayname || ''}</td>
                     <td className="p-2 overflow-hidden text-ellipsis max-w-[140px]">{s.phone}</td>
                     <td className="p-2">{s.consent ? 'Yes' : 'No'}</td>
                     <td className="p-2 overflow-hidden text-ellipsis max-w-[180px]">{new Date(s.date).toLocaleString()}</td>
