@@ -265,9 +265,9 @@ export default function Home() {
       if (ratingFilter.length > 0 && ratingFilter.length < wheels.rating.length) {
         (apiBody as any).rating = ratingFilter.length === 1 ? ratingFilter[0] : ratingFilter;
       }
-      // Add minStars to API body if not all stars are selected
+      // Send allowedStars as an array for strict star filtering
       if (starFilters.size > 0 && starFilters.size < 5) {
-        (apiBody as any).minStars = Math.min(...Array.from(starFilters));
+        (apiBody as any).allowedStars = Array.from(starFilters);
       }
       const res = await fetch("/api/generate-movie", {
         method: "POST",

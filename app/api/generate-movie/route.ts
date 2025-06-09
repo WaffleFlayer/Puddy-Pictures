@@ -37,7 +37,7 @@ const ratingList = ['G', 'PG', 'PG-13', 'R'];
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  let { region, genre, decade, budget, rating, minStars } = body;
+  let { region, genre, decade, budget, rating, allowedStars } = body;
 
   // Fallback to random if missing
   if (!region) {
@@ -149,9 +149,11 @@ export async function POST(req: NextRequest) {
       movieInfo.star_rating = avg;
     }
     movieInfo.poster_url = movieInfo.poster_url || '';
-    // Filter by minStars if provided
-    if (minStars && movieInfo.star_rating && movieInfo.star_rating < minStars) {
-      return NextResponse.json({ error: 'No movie found with sufficient star rating' }, { status: 404 });
+    // Filter by allowedStars if provided
+    if (Array.isArray(allowedStars) && allowedStars.length > 0) {
+      if (typeof movieInfo.star_rating === 'number' && !allowedStars.includes(movieInfo.star_rating)) {
+        return NextResponse.json({ error: 'No movie found with selected critic star ratings' }, { status: 404 });
+      }
     }
     return NextResponse.json(movieInfo);
   } catch (err) {
