@@ -1,6 +1,7 @@
 // Admin Home Page
 'use client';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 function AdminNav() {
   return (
@@ -34,6 +35,14 @@ function AdminFooter() {
 }
 
 export default function AdminHome() {
+  const router = useRouter();
+
+  // Add logout button
+  const handleLogout = async () => {
+    await fetch('/api/admin-logout', { method: 'POST' });
+    router.replace('/admin-login');
+  };
+
   return (
     <div className="min-h-screen bg-[#181c2b] text-[#eaf6fb] flex flex-col items-center font-retro">
       <AdminNav />
@@ -53,6 +62,7 @@ export default function AdminHome() {
             <button className="w-full py-4 px-6 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-bold rounded-xl shadow-lg text-2xl hover:from-[#ff00c8] hover:to-[#00fff7] transition">Export Registrations</button>
           </Link>
         </div>
+        <button onClick={handleLogout} className="mt-10 px-6 py-2 bg-[#ff00c8] text-[#fffbe7] rounded-xl font-bold hover:bg-[#a084ff] transition">Logout</button>
       </main>
       <AdminFooter />
     </div>

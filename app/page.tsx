@@ -319,6 +319,75 @@ export default function Home() {
     );
   }
 
+  function PreviousWeeklyMovies() {
+    const [history, setHistory] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    useEffect(() => {
+      fetch('/api/public-weekly-movie-history')
+        .then(r => r.ok ? r.json() : Promise.reject('Failed to fetch'))
+        .then(setHistory)
+        .catch(() => setError('Could not load previous movies.'))
+        .finally(() => setLoading(false));
+    }, []);
+
+    if (loading) return <div className="text-[#00fff7] font-retro text-lg py-6">Loading previous weekly movies...</div>;
+    if (error) return <div className="text-[#ff00c8] font-retro text-lg py-6">{error}</div>;
+    if (!history.length) return <div className="text-[#a084ff] font-retro text-lg py-6">No previous weekly movies yet.</div>;
+
+    return (
+      <div className="w-full max-w-5xl mx-auto mt-10 mb-20">
+        <h2 className="text-3xl font-extrabold text-[#00fff7] mb-6 font-retro text-left">Previous Weekly Movies</h2>
+        <div className="flex flex-col gap-10">
+          {history.map((movie, idx) => (
+            <PreviousMovieWithReviews key={movie.code || idx} movie={movie} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  function PreviousMovieWithReviews({ movie }: { movie: any }) {
+    const [reviews, setReviews] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    useEffect(() => {
+      if (movie && movie.code) {
+        fetch(`/api/get-reviews?code=${movie.code}`)
+          .then(r => r.ok ? r.json() : [])
+          .then(setReviews)
+          .finally(() => setLoading(false));
+      }
+    }, [movie]);
+    return (
+      <div className="bg-[#23243a] border-2 border-[#00fff7] rounded-2xl p-8 flex flex-col md:flex-row gap-8">
+        {movie.poster_url && (
+          <img src={movie.poster_url} alt={movie.title} className="rounded-xl shadow-lg max-w-[180px] max-h-[260px] border-2 border-[#00fff7] bg-[#1a2233]" style={{objectFit:'cover'}} />
+        )}
+        <div className="flex-1 flex flex-col">
+          <div className="text-2xl font-bold text-[#ff00c8] mb-1">{movie.title} <span className="text-lg text-[#fffbe7] font-normal">({movie.release_year})</span></div>
+          <div className="mb-2 text-[#eaf6fb]">{movie.description}</div>
+          <div className="mb-2 text-[#a084ff]">Review Code: <span className="font-mono">{movie.code}</span></div>
+          <div className="mb-2 text-[#00fff7]">Reply to the club SMS with this code at the start of your review!</div>
+          <div className="mt-4">
+            <h3 className="text-xl font-bold text-[#ff00c8] mb-2">Reviews</h3>
+            {loading ? <div className="text-[#00fff7]">Loading reviews...</div> :
+              reviews.length === 0 ? <div className="text-[#a084ff]">No reviews yet.</div> :
+              <ul className="space-y-2">
+                {reviews.map((r, i) => (
+                  <li key={i} className="bg-[#181c2b] border border-[#ff00c8] rounded-xl p-3 text-[#eaf6fb]">
+                    <div className="text-base text-[#00fff7] mb-1">{r.review}</div>
+                    {r.displayName && <div className="text-xs text-[#ff00c8] font-bold mb-1">— {r.displayName}</div>}
+                    <div className="text-xs text-[#a084ff]">Submitted {r.timestamp ? new Date(r.timestamp).toLocaleString() : ''}</div>
+                  </li>
+                ))}
+              </ul>
+            }
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <Head>
@@ -469,6 +538,7 @@ export default function Home() {
           {activeTab === 'club' && (
             <div className="w-full">
               <WeeklyMoviePublicHomePreloaded movie={weeklyMovie} reviews={weeklyReviews} loading={weeklyLoading} />
+              <PreviousWeeklyMovies />
             </div>
           )}
         </section>
