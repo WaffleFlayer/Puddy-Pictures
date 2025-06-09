@@ -76,6 +76,7 @@ export default function Home() {
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [reviewsError, setReviewsError] = useState("");
   const [activeTab, setActiveTab] = useState<'picker' | 'club'>('picker');
+  const [progress, setProgress] = useState(0);
 
   // Preload weekly movie and reviews for smooth tab switching
   const [weeklyMovie, setWeeklyMovie] = useState<any>(null);
@@ -213,6 +214,7 @@ export default function Home() {
     setShowResult(false);
     setError("");
     setResult(null);
+    setProgress(0);
     // Start slot animation for each picker
     order.forEach((type) => {
       let i = 0;
@@ -224,7 +226,7 @@ export default function Home() {
     });
     // Spin each wheel and update selections and results
     let newSelections: Selections = {};
-    for (const type of order) {
+    for (const [idx, type] of order.entries()) {
       await new Promise((resolve) => setTimeout(resolve, 900 + 200 * order.indexOf(type)));
       // Stop the slot animation for this picker
       if (slotIntervals.current[type]) {
@@ -236,6 +238,7 @@ export default function Home() {
       if (options.length === 0) {
         setError(`No options selected for ${type}`);
         setSpinning(false);
+        setProgress(0);
         return;
       }
       const choice = options[Math.floor(Math.random() * options.length)];
@@ -243,6 +246,7 @@ export default function Home() {
       setSlotValues((prev) => ({ ...prev, [type]: choice }));
       newSelections = { ...newSelections, [type]: choice };
       setSpinResults((prev) => ([...prev, `${type.charAt(0).toUpperCase() + type.slice(1)}: ${choice}`]));
+      setProgress(Math.round(((idx + 1) / order.length) * 60)); // 0-60% for wheels
     }
     // Prevent duplicate movies in session (by title+year only, using localStorage for persistence)
     let rolledTitles: string[] = [];
@@ -250,12 +254,15 @@ export default function Home() {
       rolledTitles = JSON.parse(localStorage.getItem('puddy_rolled_titles') || '[]');
     } catch {}
     let movieData: MovieResult | null = null;
-    while (true) {
+    let attempts = 0;
+    const maxAttempts = 8;
+    let found = false;
+    while (attempts < maxAttempts) {
+      setProgress(60 + Math.round((attempts / maxAttempts) * 40)); // 60-100% for API attempts
       // When calling /api/generate-movie, include rating as a filter (not as a rolled value)
       const ratingFilter = Array.from(filters.rating);
       const apiBody = { ...newSelections };
       if (ratingFilter.length > 0 && ratingFilter.length < wheels.rating.length) {
-        // If only one rating, send as string; if multiple, send as array
         (apiBody as any).rating = ratingFilter.length === 1 ? ratingFilter[0] : ratingFilter;
       }
       // Add minStars to API body if not all stars are selected
@@ -269,9 +276,14 @@ export default function Home() {
       });
       if (!res.ok) {
         const errorText = await res.text();
-        setError("Server error: " + res.status + " - " + errorText);
+        if (res.status === 404) {
+          setError("No movie found with the current filter settings. Try relaxing your filters and spin again!");
+        } else {
+          setError("Server error: " + res.status + " - " + errorText);
+        }
         setShowResult(true);
         setSpinning(false);
+        setProgress(0);
         return;
       }
       const data: MovieResult = await res.json();
@@ -280,13 +292,23 @@ export default function Home() {
         movieData = { ...data };
         rolledTitles.push(movieTitleKey);
         localStorage.setItem('puddy_rolled_titles', JSON.stringify(rolledTitles));
+        found = true;
         break;
       }
-      // Otherwise, try again (infinite loop until a new movie is found)
+      attempts++;
+    }
+    setProgress(100);
+    if (!found) {
+      setError("All generated movies are repeats or no movie found. Try spinning again or relax your filters.");
+      setShowResult(true);
+      setSpinning(false);
+      setProgress(0);
+      return;
     }
     setResult(movieData);
     setShowResult(true);
     setSpinning(false);
+    setProgress(0);
   };
 
   const resetAll = () => {
@@ -464,7 +486,7 @@ export default function Home() {
             <a href="/signup" className="hover:text-[#ff00c8] transition font-semibold">Sign Up</a>
           </div>
         </nav>
-        <section className="flex flex-col items-center justify-center flex-1 py-14 px-4 text-center">
+        <section className="flex-1 w-full flex flex-col items-center justify-start pt-8 pb-16">
           <h1 className="text-6xl md:text-7xl font-extrabold mb-4 text-[#00fff7] font-retro italic tracking-tight" style={{letterSpacing:'-2px'}}>Discover Your Next Movie</h1>
           <p className="text-2xl md:text-3xl text-[#eaf6fb]/90 mb-10 max-w-2xl mx-auto font-retro" style={{textShadow:'0 1px 0 #00fff7'}}>Let Puddy Pictures Picker surprise you with a film from around the world. Spin the wheels, get a random pick, and start watching!</p>
           {/* Button Group for Picker/Club */}
@@ -556,6 +578,18 @@ export default function Home() {
               {/* Picker UI (was previously here) */}
               {!showResult && (
                 <div className="w-full max-w-5xl mx-auto bg-[#23243a]/95 rounded-3xl shadow-2xl border-4 border-[#00fff7] p-10 flex flex-col items-center gap-8 animate-glow overflow-x-auto">
+                  {/* Loading bar or spinner */}
+                  {spinning && (
+                    <div className="w-full flex flex-col items-center mb-4">
+                      <div className="w-full max-w-md h-3 bg-[#181c2b] rounded-full overflow-hidden border-2 border-[#00fff7]">
+                        <div
+                          className="h-full bg-gradient-to-r from-[#00fff7] to-[#ff00c8] animate-bounce"
+                          style={{ width: `${progress}%`, transition: 'width 0.3s' }}
+                        />
+                      </div>
+                      <div className="mt-2 text-[#00fff7] font-retro text-lg">Picking your movie...</div>
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-8 w-full min-w-[700px]">
                     {order.map((type) => (
                       <div key={type} className="flex flex-col items-start w-full">
@@ -581,6 +615,10 @@ export default function Home() {
                       <p key={i}>{r}</p>
                     ))}
                   </div>
+                  {/* Error message if no movie found */}
+                  {error && (
+                    <div className="mt-6 text-lg text-[#ff00c8] font-bold text-center w-full">{error}</div>
+                  )}
                 </div>
               )}
               {showResult && result && (
@@ -629,6 +667,12 @@ export default function Home() {
                     </button>
                   </div>
                 </>
+              )}
+              {/* Error message if no movie found in result view */}
+              {showResult && error && !result && (
+                <div className="w-full max-w-2xl mx-auto mt-10 p-8 bg-[#23243a] border-4 border-[#ff00c8] rounded-3xl text-center text-2xl text-[#ff00c8] font-retro animate-bounce">
+                  {error}
+                </div>
               )}
             </div>
           )}
