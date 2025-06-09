@@ -47,11 +47,36 @@ export async function POST(req: NextRequest) {
       const fromNumber = process.env.TWILIO_PHONE_NUMBER;
       if (accountSid && authToken && fromNumber) {
         const client = twilio(accountSid, authToken);
+        // Send welcome SMS
         await client.messages.create({
           body: `Welcome to Puddy Pictures Movie Club! 🎬\nYou are now subscribed for weekly movie picks and reviews. Reply STOP to unsubscribe at any time.`,
           from: fromNumber,
           to: phone
         });
+        // Fetch current weekly movie
+        const movieRes = await pool.query('SELECT * FROM weekly_movie ORDER BY id DESC LIMIT 1');
+        if (movieRes.rows.length > 0) {
+          const movie = movieRes.rows[0];
+          // Use the same SMS preview as the weekly broadcast
+          const wittyIntro = movie.ai_intro || '';
+          const smsText = `${wittyIntro}\n\n` +
+            `Title: ${movie.title}\n` +
+            `Year: ${movie.release_year}\n` +
+            `Description: ${movie.description}\n` +
+            `Director: ${movie.director}\n` +
+            `Country: ${movie.country}\n` +
+            `Genre: ${movie.genre}\n` +
+            `Budget: ${movie.budget}\n` +
+            `Where to watch: ${movie.watch_info}\n` +
+            `Review code: ${movie.code}\n` +
+            `Reply to the club SMS with this code at the start of your review!`;
+          await client.messages.create({
+            body: smsText,
+            from: fromNumber,
+            to: phone,
+            mediaUrl: movie.poster_url ? [movie.poster_url] : undefined
+          });
+        }
       }
     } catch (err) {
       // Log Twilio errors but don't block registration
