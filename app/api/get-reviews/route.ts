@@ -8,5 +8,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Missing code parameter' }, { status: 400 });
   }
   const { rows } = await pool.query('SELECT * FROM reviews WHERE code = $1 COLLATE "C"', [code]);
-  return NextResponse.json(rows);
+  // Always return displayName as 'displayName' (not 'displayname')
+  const reviews = rows.map(r => ({
+    ...r,
+    displayName: r.displayName || r.displayname || undefined
+  }));
+  return NextResponse.json(reviews);
 }
