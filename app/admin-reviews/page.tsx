@@ -45,6 +45,8 @@ export default function AdminReviewsPage() {
           <Link href="/admin" className="text-lg font-bold text-[#ff00c8] hover:text-[#00fff7]">Admin Home</Link>
           <Link href="/admin-subscribers" className="text-lg font-bold text-[#ff00c8] hover:text-[#00fff7]">Subscribers</Link>
           <Link href="/weekly-movie-page" className="text-lg font-bold text-[#ff00c8] hover:text-[#00fff7]">Weekly Movie</Link>
+          <Link href="/export-registrations" className="text-lg font-bold text-[#ff00c8] hover:text-[#00fff7]">Export</Link>
+          <Link href="/admin-reviews" className="text-lg font-bold text-[#00fff7] underline">Reviews</Link>
         </nav>
       </header>
       <div className="max-w-4xl mx-auto bg-[#23243a] border-4 border-[#00fff7] rounded-3xl p-8">
@@ -84,6 +86,17 @@ export default function AdminReviewsPage() {
           </table>
         )}
       </div>
+      <footer className="w-full flex flex-col items-center py-6 bg-gradient-to-r from-[#23243a] via-[#181c2b] to-[#23243a] shadow-inner border-t-4 border-[#ff00c8] mt-16">
+        <nav className="flex flex-wrap gap-8 justify-center items-center">
+          <Link href="/" className="text-lg font-bold text-[#ff00c8] hover:text-[#00fff7] transition">Public Home</Link>
+          <Link href="/admin" className="text-lg font-bold text-[#ff00c8] hover:text-[#00fff7] transition">Admin Home</Link>
+          <Link href="/weekly-movie-page" className="text-lg font-bold text-[#ff00c8] hover:text-[#00fff7] transition">Weekly Movie</Link>
+          <Link href="/admin-subscribers" className="text-lg font-bold text-[#ff00c8] hover:text-[#00fff7] transition">Subscribers</Link>
+          <Link href="/admin-reviews" className="text-lg font-bold text-[#ff00c8] hover:text-[#00fff7] transition">Reviews</Link>
+          <Link href="/export-registrations" className="text-lg font-bold text-[#ff00c8] hover:text-[#00fff7] transition">Export</Link>
+        </nav>
+        <div className="mt-4 text-xs text-[#a084ff]">&copy; {new Date().getFullYear()} Puddy Pictures Admin</div>
+      </footer>
     </div>
   );
 }

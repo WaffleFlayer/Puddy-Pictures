@@ -1,4 +1,4 @@
-// Admin Home Page
+// Export Registrations Admin Page
 'use client';
 import Link from 'next/link';
 
@@ -33,25 +33,17 @@ function AdminFooter() {
   );
 }
 
-export default function AdminHome() {
+export default function ExportRegistrationsAdmin() {
   return (
     <div className="min-h-screen bg-[#181c2b] text-[#eaf6fb] flex flex-col items-center font-retro">
       <AdminNav />
       <main className="flex-1 flex flex-col items-center justify-center w-full p-8">
-        <h1 className="text-4xl font-extrabold text-[#00fff7] mb-10">Admin Dashboard</h1>
-        <div className="flex flex-col gap-6 w-full max-w-md">
-          <Link href="/weekly-movie-page">
-            <button className="w-full py-4 px-6 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-bold rounded-xl shadow-lg text-2xl hover:from-[#ff00c8] hover:to-[#00fff7] transition">Weekly Movie Admin</button>
-          </Link>
-          <Link href="/admin-subscribers">
-            <button className="w-full py-4 px-6 bg-gradient-to-r from-[#ff00c8] to-[#00fff7] text-[#23243a] font-bold rounded-xl shadow-lg text-2xl hover:from-[#00fff7] hover:to-[#ff00c8] transition">Subscribers Admin</button>
-          </Link>
-          <Link href="/admin-reviews">
-            <button className="w-full py-4 px-6 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-bold rounded-xl shadow-lg text-2xl hover:from-[#ff00c8] hover:to-[#00fff7] transition">Reviews Admin</button>
-          </Link>
-          <Link href="/export-registrations">
-            <button className="w-full py-4 px-6 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-bold rounded-xl shadow-lg text-2xl hover:from-[#ff00c8] hover:to-[#00fff7] transition">Export Registrations</button>
-          </Link>
+        <h1 className="text-4xl font-extrabold text-[#00fff7] mb-10">Export Registrations</h1>
+        <div className="bg-[#23243a] border-4 border-[#00fff7] rounded-3xl p-8 max-w-2xl w-full text-center">
+          <p className="text-lg mb-4">Download a CSV export of all current registrations/subscribers.</p>
+          <a href="/api/export-registrations" target="_blank" rel="noopener noreferrer">
+            <button className="py-4 px-8 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-bold rounded-xl shadow-lg text-2xl hover:from-[#ff00c8] hover:to-[#00fff7] transition">Download CSV</button>
+          </a>
         </div>
       </main>
       <AdminFooter />
