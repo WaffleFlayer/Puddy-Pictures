@@ -116,7 +116,6 @@ export default function Home() {
     };
     return initial;
   });
-  const [starFilters, setStarFilters] = useState<Set<number>>(new Set([1,2,3,4,5]));
 
   const handleFilterChange = (type: PickerType, value: string) => {
     setFilters((prev) => {
@@ -128,13 +127,6 @@ export default function Home() {
         set.add(value);
       }
       next[type] = set;
-      return next;
-    });
-  };
-  const handleStarFilterChange = (star: number) => {
-    setStarFilters(prev => {
-      const next = new Set(prev);
-      if (next.has(star)) next.delete(star); else next.add(star);
       return next;
     });
   };
@@ -265,10 +257,6 @@ export default function Home() {
       if (ratingFilter.length > 0 && ratingFilter.length < wheels.rating.length) {
         (apiBody as any).rating = ratingFilter.length === 1 ? ratingFilter[0] : ratingFilter;
       }
-      // Send allowedStars as an array for strict star filtering
-      if (starFilters.size > 0 && starFilters.size < 5) {
-        (apiBody as any).allowedStars = Array.from(starFilters);
-      }
       const res = await fetch("/api/generate-movie", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -354,8 +342,6 @@ export default function Home() {
             <span className="text-[#f3ede7]">{movie.watch_info}</span>
             <span className="font-bold text-[#00fff7]">Rating:</span>
             <span className="text-[#f3ede7]">{movie.rating || 'N/A'}</span>
-            <span className="font-bold text-[#00fff7]">Critic Stars:</span>
-            <span className="text-[#f3ede7]">{movie.star_rating ? Array(movie.star_rating).fill('★').join('') + ` (${movie.star_rating} / 5)` : 'N/A'}</span>
           </div>
           <div className="mb-2 text-[#a084ff]">Review Code: <span className="font-mono">{movie.code}</span></div>
           <div className="mb-2 text-[#00fff7]">Reply to the club SMS with this code at the start of your review!</div>
@@ -552,28 +538,8 @@ export default function Home() {
                       ))}
                     </div>
                   </div>
-                  {/* Star rating filter column */}
-                  <div className="bg-[#1a2233] rounded-xl p-4 border-2 border-[#23243a] flex flex-col mb-2">
-                    <div className="font-bold text-[#00fff7] mb-3 uppercase tracking-wider text-lg text-center">Critic Stars</div>
-                    <div className="flex flex-col gap-1" style={{wordBreak:'break-word',maxWidth:'100%'}}>
-                      {[5,4,3,2,1].map((star) => (
-                        <label key={star} className="flex items-center gap-2 text-[#eaf6fb] text-base cursor-pointer px-1 py-0.5 rounded hover:bg-[#23243a] transition" style={{minHeight:'2rem',overflowWrap:'anywhere',maxWidth:'100%'}}>
-                          <input
-                            type="checkbox"
-                            checked={starFilters.has(star)}
-                            onChange={() => handleStarFilterChange(star)}
-                            className="accent-[#00fff7]"
-                            style={{width:'1.15rem',height:'1.15rem',minWidth:'1.15rem',minHeight:'1.15rem',margin:0,verticalAlign:'middle'}}
-                          />
-                          <span style={{fontSize:'1rem',lineHeight:'1.15rem',display:'inline-block',minHeight:'1.15rem',wordBreak:'break-word',maxWidth:'100%'}}>
-                            {Array(star).fill('★').join('')} {star === 1 ? 'star' : 'stars'}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
                 </div>
-                <div className="text-sm text-[#a084ff] mt-4 text-center">Uncheck any options you want to exclude from the random picker. Use the rating filter to exclude mature content. Use the critic stars filter to require a minimum critic rating.</div>
+                <div className="text-sm text-[#a084ff] mt-4 text-center">Uncheck any options you want to exclude from the random picker. Use the rating filter to exclude mature content.</div>
               </div>
               {/* Picker UI (was previously here) */}
               {!showResult && (
@@ -653,8 +619,6 @@ export default function Home() {
                         <span className="text-[#f3ede7]">{result.watch_info}</span>
                         <span className="font-bold text-[#00fff7]">Rating:</span>
                         <span className="text-[#f3ede7]">{result.rating || 'N/A'}</span>
-                        <span className="font-bold text-[#00fff7]">Critic Stars:</span>
-                        <span className="text-[#f3ede7]">{result.star_rating ? Array(result.star_rating).fill('★').join('') + ` (${result.star_rating} / 5)` : 'N/A'}</span>
                       </div>
                     </div>
                   </div>
@@ -663,7 +627,7 @@ export default function Home() {
                       className="text-2xl px-10 py-3 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-extrabold rounded-full shadow-lg hover:from-[#ff00c8] hover:to-[#00fff7] transition font-retro border-2 border-[#00fff7]"
                       onClick={resetAll}
                     >
-                      Try Another
+                      Re-Roll
                     </button>
                   </div>
                 </>

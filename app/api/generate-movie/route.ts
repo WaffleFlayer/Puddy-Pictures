@@ -14,7 +14,6 @@ interface MovieInfo {
   budget?: string;
   release_year?: string;
   rating?: string;
-  star_rating?: number; // 1-5 stars, aggregated from critic sources
 }
 
 const regionCountries: Record<string, string[]> = {
@@ -37,7 +36,7 @@ const ratingList = ['G', 'PG', 'PG-13', 'R'];
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  let { region, genre, decade, budget, rating, allowedStars } = body;
+  let { region, genre, decade, budget, rating } = body;
 
   // Fallback to random if missing
   if (!region) {
@@ -108,8 +107,7 @@ export async function POST(req: NextRequest) {
     movieInfo.release_year = movieInfo.year;
     movieInfo.rating = movieInfo.rating || rating;
 
-    // Fetch poster and critic ratings from OMDb API if API key is available
-    let starSources: number[] = [];
+    // Fetch poster from OMDb API if API key is available
     if (process.env.OMDB_API_KEY) {
       try {
         const omdbRes = await fetch(
@@ -123,38 +121,9 @@ export async function POST(req: NextRequest) {
         if (!movieInfo.rating && omdbData.Rated) {
           movieInfo.rating = omdbData.Rated;
         }
-        // Aggregate critic ratings to star system (1-5)
-        if (omdbData.imdbRating && omdbData.imdbRating !== 'N/A') {
-          const imdb = parseFloat(omdbData.imdbRating);
-          if (!isNaN(imdb)) starSources.push(Math.round(imdb / 2)); // IMDb is out of 10
-        }
-        if (omdbData.Metascore && omdbData.Metascore !== 'N/A') {
-          const meta = parseInt(omdbData.Metascore);
-          if (!isNaN(meta)) starSources.push(Math.round(meta / 20)); // Metascore is out of 100
-        }
-        if (Array.isArray(omdbData.Ratings)) {
-          for (const r of omdbData.Ratings) {
-            if (r.Source === 'Rotten Tomatoes' && r.Value.endsWith('%')) {
-              const pct = parseInt(r.Value);
-              if (!isNaN(pct)) starSources.push(Math.round(pct / 20)); // RT is out of 100
-            }
-          }
-        }
       } catch {}
     }
-    // Compute unified star rating (average, rounded, clamp 1-5)
-    if (starSources.length > 0) {
-      let avg = starSources.reduce((a, b) => a + b, 0) / starSources.length;
-      avg = Math.max(1, Math.min(5, Math.round(avg)));
-      movieInfo.star_rating = avg;
-    }
     movieInfo.poster_url = movieInfo.poster_url || '';
-    // Filter by allowedStars if provided
-    if (Array.isArray(allowedStars) && allowedStars.length > 0) {
-      if (typeof movieInfo.star_rating !== 'number' || !allowedStars.includes(movieInfo.star_rating)) {
-        return NextResponse.json({ error: 'No movie found with selected critic star ratings' }, { status: 404 });
-      }
-    }
     return NextResponse.json(movieInfo);
   } catch (err) {
     return NextResponse.json({ error: 'Failed to generate movie' }, { status: 500 });
