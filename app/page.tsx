@@ -672,6 +672,15 @@ export default function Home() {
               {showResult && error && !result && (
                 <div className="w-full max-w-2xl mx-auto mt-10 p-8 bg-[#23243a] border-4 border-[#ff00c8] rounded-3xl text-center text-2xl text-[#ff00c8] font-retro animate-bounce">
                   {error}
+                  <div className="mt-8 flex justify-center">
+                    <button
+                      className="text-xl px-8 py-3 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-extrabold rounded-full shadow-lg hover:from-[#ff00c8] hover:to-[#00fff7] transition font-retro border-2 border-[#00fff7]"
+                      onClick={runSequence}
+                      style={{ marginTop: '1.5rem' }}
+                    >
+                      Try Again
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

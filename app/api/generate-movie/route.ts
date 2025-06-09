@@ -151,7 +151,7 @@ export async function POST(req: NextRequest) {
     movieInfo.poster_url = movieInfo.poster_url || '';
     // Filter by allowedStars if provided
     if (Array.isArray(allowedStars) && allowedStars.length > 0) {
-      if (typeof movieInfo.star_rating === 'number' && !allowedStars.includes(movieInfo.star_rating)) {
+      if (typeof movieInfo.star_rating !== 'number' || !allowedStars.includes(movieInfo.star_rating)) {
         return NextResponse.json({ error: 'No movie found with selected critic star ratings' }, { status: 404 });
       }
     }
