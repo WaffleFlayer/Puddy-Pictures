@@ -4,9 +4,9 @@ export async function POST(req: NextRequest) {
   const { password } = await req.json();
   const adminPassword = process.env.ADMIN_PASSWORD;
   if (password && adminPassword && password === adminPassword) {
-    // Set a secure cookie for admin authentication
+    // Set a secure cookie for admin authentication (just a flag, not the password)
     const res = NextResponse.json({ success: true });
-    res.cookies.set('admin_auth', password, {
+    res.cookies.set('admin_auth', '1', {
       httpOnly: true,
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
