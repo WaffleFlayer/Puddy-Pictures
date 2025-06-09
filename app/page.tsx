@@ -477,10 +477,7 @@ export default function Home() {
                   {order.map((type) => (
                     <div key={type} className="bg-[#1a2233] rounded-xl p-4 border-2 border-[#23243a] flex flex-col mb-2">
                       <div className="font-bold text-[#00fff7] mb-3 uppercase tracking-wider text-lg text-center">{type.charAt(0).toUpperCase() + type.slice(1)}</div>
-                      <div
-                        className="flex flex-col gap-1"
-                        style={{wordBreak:'break-word',maxWidth:'100%'}}
-                      >
+                      <div className="flex flex-col gap-1" style={{wordBreak:'break-word',maxWidth:'100%'}}>
                         {(type === 'budget' ? wheels.budget : type === 'rating' ? wheels.rating : [...wheels[type]].sort()).map((option) => (
                           <label
                             key={option}
@@ -500,8 +497,26 @@ export default function Home() {
                       </div>
                     </div>
                   ))}
+                  {/* Rating filter as a separate column */}
+                  <div className="bg-[#1a2233] rounded-xl p-4 border-2 border-[#23243a] flex flex-col mb-2">
+                    <div className="font-bold text-[#00fff7] mb-3 uppercase tracking-wider text-lg text-center">Rating</div>
+                    <div className="flex flex-col gap-1" style={{wordBreak:'break-word',maxWidth:'100%'}}>
+                      {wheels.rating.map((option) => (
+                        <label key={option} className="flex items-center gap-2 text-[#eaf6fb] text-base cursor-pointer px-1 py-0.5 rounded hover:bg-[#23243a] transition" style={{minHeight:'2rem',overflowWrap:'anywhere',maxWidth:'100%'}}>
+                          <input
+                            type="checkbox"
+                            checked={filters.rating.has(option)}
+                            onChange={() => handleFilterChange('rating', option)}
+                            className="accent-[#00fff7]"
+                            style={{width:'1.15rem',height:'1.15rem',minWidth:'1.15rem',minHeight:'1.15rem',margin:0,verticalAlign:'middle'}}
+                          />
+                          <span style={{fontSize:'1rem',lineHeight:'1.15rem',display:'inline-block',minHeight:'1.15rem',wordBreak:'break-word',maxWidth:'100%'}}>{option}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-sm text-[#a084ff] mt-4 text-center">Uncheck any options you want to exclude from the random picker.</div>
+                <div className="text-sm text-[#a084ff] mt-4 text-center">Uncheck any options you want to exclude from the random picker. Use the rating filter to exclude mature content.</div>
               </div>
               {/* Picker UI (was previously here) */}
               {!showResult && (
