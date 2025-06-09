@@ -130,6 +130,7 @@ function WeeklyMoviePublic({ movie }: { movie: any }) {
             {reviews.map((r, i) => (
               <li key={i} className="bg-[#181c2b] border-2 border-[#ff00c8] rounded-xl p-4 text-[#eaf6fb]">
                 <div className="text-lg text-[#00fff7] mb-1">{r.review}</div>
+                {r.displayName && <div className="text-sm text-[#00fff7] font-bold">– {r.displayName}</div>}
                 <div className="text-xs text-[#a084ff]">Submitted {r.timestamp ? new Date(r.timestamp).toLocaleString() : ''}</div>
               </li>
             ))}
