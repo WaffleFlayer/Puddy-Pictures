@@ -1,9 +1,9 @@
 // Admin Login Page
 'use client';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function AdminLogin() {
+function AdminLoginInner() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
@@ -42,5 +42,13 @@ export default function AdminLogin() {
         <button type="submit" className="py-3 px-8 bg-gradient-to-r from-[#00fff7] to-[#ff00c8] text-[#23243a] font-bold rounded-xl shadow-lg text-xl hover:from-[#ff00c8] hover:to-[#00fff7] transition">Login</button>
       </form>
     </div>
+  );
+}
+
+export default function AdminLogin() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-[#00fff7] font-retro text-2xl">Loading...</div>}>
+      <AdminLoginInner />
+    </Suspense>
   );
 }
