@@ -186,12 +186,16 @@ body {
   label.flex.items-center > input[type="checkbox"] {
     margin: 0 !important;
     order: 0 !important;
-    align-self: flex-start !important;
+    align-self: center !important;
     display: inline-block !important;
-    min-width: 1.15rem;
-    min-height: 1.15rem;
-    width: 1.15rem;
-    height: 1.15rem;
+    min-width: 1.5rem;
+    min-height: 1.5rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    box-sizing: border-box;
+    /* force left alignment */
+    position: relative;
+    left: 0;
   }
   label.flex.items-center > span {
     order: 1 !important;
@@ -200,9 +204,12 @@ body {
     text-align: left !important;
     margin-left: 0.1rem;
     vertical-align: middle;
+    flex: 1 1 auto;
+    line-height: 1.5rem;
   }
   /* Make sure the filter column is not centered */
   .flex.flex-col.gap-1, .flex.flex-col {
     align-items: flex-start !important;
+    width: 100%;
   }
 }
