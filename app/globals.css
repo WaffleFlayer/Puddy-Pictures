@@ -173,4 +173,20 @@ body {
   ::-webkit-scrollbar {
     display: none;
   }
+  /* Ensure filter checkboxes and labels are always in a row */
+  label.flex.items-center {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 0.6rem !important;
+  }
+  label.flex.items-center > input[type="checkbox"] {
+    margin: 0 !important;
+    order: 0 !important;
+  }
+  label.flex.items-center > span {
+    order: 1 !important;
+    display: inline-block !important;
+    min-width: 0;
+  }
 }
