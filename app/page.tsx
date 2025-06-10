@@ -65,6 +65,18 @@ const wheels: Record<PickerType, string[]> = {
 // Only roll for region, genre, decade, budget
 const order: PickerType[] = ["region", "genre", "decade", "budget"];
 
+// Helper for mobile detection
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+  return isMobile;
+}
+
 export default function Home() {
   const [selections, setSelections] = useState<Selections>({});
   const [spinResults, setSpinResults] = useState<string[]>([]);
@@ -77,6 +89,7 @@ export default function Home() {
   const [reviewsError, setReviewsError] = useState("");
   const [activeTab, setActiveTab] = useState<'picker' | 'club'>('picker');
   const [progress, setProgress] = useState(0);
+  const isMobile = useIsMobile();
 
   // Preload weekly movie and reviews for smooth tab switching
   const [weeklyMovie, setWeeklyMovie] = useState<any>(null);
@@ -454,6 +467,14 @@ export default function Home() {
     );
   }
 
+  // State for expanded/collapsed filter sections (mobile only)
+  const [expandedFilters, setExpandedFilters] = useState<Record<PickerType, boolean>>({
+    region: false, genre: false, decade: false, budget: false, rating: false
+  });
+  const toggleFilter = (type: PickerType) => {
+    setExpandedFilters(prev => ({ ...prev, [type]: !prev[type] }));
+  };
+
   return (
     <>
       <Head>
@@ -496,48 +517,58 @@ export default function Home() {
               {/* Filter Controls */}
               <div className="w-full max-w-5xl mx-auto mb-8 p-6 bg-[#23243a] border-2 border-[#00fff7] rounded-2xl overflow-x-auto">
                 <h3 className="text-2xl font-bold text-[#00fff7] mb-4 font-retro">Filter Randomization Pool</h3>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-8 min-w-[700px]">
-                  {order.map((type) => (
+                <div className={isMobile ? "flex flex-col gap-4" : "grid grid-cols-1 md:grid-cols-4 gap-8 min-w-[700px]"}>
+                  {order.concat(['rating']).map((type) => (
                     <div key={type} className="bg-[#1a2233] rounded-xl p-4 border-2 border-[#23243a] flex flex-col mb-2">
-                      <div className="font-bold text-[#00fff7] mb-3 uppercase tracking-wider text-lg text-center">{type.charAt(0).toUpperCase() + type.slice(1)}</div>
-                      <div className="flex flex-col gap-1" style={{wordBreak:'break-word',maxWidth:'100%'}}>
-                        {(type === 'budget' ? wheels.budget : type === 'rating' ? wheels.rating : [...wheels[type]].sort()).map((option) => (
-                          <label
-                            key={option}
-                            className="flex items-center gap-2 text-[#eaf6fb] text-base cursor-pointer px-1 py-0.5 rounded hover:bg-[#23243a] transition"
-                            style={{minHeight:'2rem',overflowWrap:'anywhere',maxWidth:'100%'}}
+                      {isMobile ? (
+                        <>
+                          <button
+                            className="w-full flex items-center justify-between text-lg font-bold text-[#00fff7] uppercase tracking-wider mb-2 focus:outline-none"
+                            onClick={() => toggleFilter(type)}
+                            aria-expanded={expandedFilters[type]}
+                            style={{ background: 'none', border: 'none', padding: 0, margin: 0 }}
                           >
-                            <input
-                              type="checkbox"
-                              checked={filters[type].has(option)}
-                              onChange={() => handleFilterChange(type, option)}
-                              className="accent-[#00fff7]"
-                              style={{width:'1.15rem',height:'1.15rem',minWidth:'1.15rem',minHeight:'1.15rem',margin:0,verticalAlign:'middle'}}
-                            />
-                            <span style={{fontSize:'1rem',lineHeight:'1.15rem',display:'inline-block',minHeight:'1.15rem',wordBreak:'break-word',maxWidth:'100%'}}>{option}</span>
-                          </label>
-                        ))}
-                      </div>
+                            <span>{type.charAt(0).toUpperCase() + type.slice(1)}</span>
+                            <span style={{ fontSize: '1.3em' }}>{expandedFilters[type] ? '−' : '+'}</span>
+                          </button>
+                          {expandedFilters[type] && (
+                            <div className="flex flex-col gap-1 mt-2">
+                              {wheels[type].map((option) => (
+                                <label key={option} className="flex items-center gap-2 text-[#eaf6fb] text-base cursor-pointer px-1 py-0.5 rounded hover:bg-[#23243a] transition" style={{ minHeight: '2rem', overflowWrap: 'anywhere', maxWidth: '100%' }}>
+                                  <input
+                                    type="checkbox"
+                                    checked={filters[type].has(option)}
+                                    onChange={() => handleFilterChange(type, option)}
+                                    className="accent-[#00fff7]"
+                                    style={{ width: '1.15rem', height: '1.15rem', minWidth: '1.15rem', minHeight: '1.15rem', margin: 0, verticalAlign: 'middle' }}
+                                  />
+                                  <span style={{ fontSize: '1rem', lineHeight: '1.15rem', display: 'inline-block', minHeight: '1.15rem', wordBreak: 'break-word', maxWidth: '100%' }}>{option}</span>
+                                </label>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <div className="font-bold text-[#00fff7] mb-3 uppercase tracking-wider text-lg text-center">{type.charAt(0).toUpperCase() + type.slice(1)}</div>
+                          <div className="flex flex-col gap-1" style={{ wordBreak: 'break-word', maxWidth: '100%' }}>
+                            {wheels[type].map((option) => (
+                              <label key={option} className="flex items-center gap-2 text-[#eaf6fb] text-base cursor-pointer px-1 py-0.5 rounded hover:bg-[#23243a] transition" style={{ minHeight: '2rem', overflowWrap: 'anywhere', maxWidth: '100%' }}>
+                                <input
+                                  type="checkbox"
+                                  checked={filters[type].has(option)}
+                                  onChange={() => handleFilterChange(type, option)}
+                                  className="accent-[#00fff7]"
+                                  style={{ width: '1.15rem', height: '1.15rem', minWidth: '1.15rem', minHeight: '1.15rem', margin: 0, verticalAlign: 'middle' }}
+                                />
+                                <span style={{ fontSize: '1rem', lineHeight: '1.15rem', display: 'inline-block', minHeight: '1.15rem', wordBreak: 'break-word', maxWidth: '100%' }}>{option}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </>
+                      )}
                     </div>
                   ))}
-                  {/* Rating filter as a separate column */}
-                  <div className="bg-[#1a2233] rounded-xl p-4 border-2 border-[#23243a] flex flex-col mb-2">
-                    <div className="font-bold text-[#00fff7] mb-3 uppercase tracking-wider text-lg text-center">Rating</div>
-                    <div className="flex flex-col gap-1" style={{wordBreak:'break-word',maxWidth:'100%'}}>
-                      {wheels.rating.map((option) => (
-                        <label key={option} className="flex items-center gap-2 text-[#eaf6fb] text-base cursor-pointer px-1 py-0.5 rounded hover:bg-[#23243a] transition" style={{minHeight:'2rem',overflowWrap:'anywhere',maxWidth:'100%'}}>
-                          <input
-                            type="checkbox"
-                            checked={filters.rating.has(option)}
-                            onChange={() => handleFilterChange('rating', option)}
-                            className="accent-[#00fff7]"
-                            style={{width:'1.15rem',height:'1.15rem',minWidth:'1.15rem',minHeight:'1.15rem',margin:0,verticalAlign:'middle'}}
-                          />
-                          <span style={{fontSize:'1rem',lineHeight:'1.15rem',display:'inline-block',minHeight:'1.15rem',wordBreak:'break-word',maxWidth:'100%'}}>{option}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
                 </div>
                 <div className="text-sm text-[#a084ff] mt-4 text-center">Uncheck any options you want to exclude from the random picker. Use the rating filter to exclude mature content.</div>
               </div>
