@@ -641,8 +641,6 @@ export default function Home() {
                         <span className="text-[#f3ede7]">{result.budget}</span>
                         <span className="font-bold text-[#00fff7]">Where to watch:</span>
                         <span className="text-[#f3ede7]">{result.watch_info}</span>
-                        <span className="font-bold text-[#00fff7]">Rating:</span>
-                        <span className="text-[#f3ede7]">{result.rating || 'N/A'}</span>
                       </div>
                     </div>
                   </div>
