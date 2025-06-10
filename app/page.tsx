@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState, useEffect, useCallback, useRef } from "react";
 import Head from 'next/head';
 import Link from "next/link";
+import FilterOption from "./FilterOption";
 
 type PickerType = "region" | "genre" | "decade" | "budget" | "rating";
 
@@ -534,16 +535,12 @@ export default function Home() {
                           {expandedFilters[type] && (
                             <div className="flex flex-col gap-1 mt-2">
                               {wheels[type].map((option) => (
-                                <label key={option} className="flex items-center gap-2 text-[#eaf6fb] text-base cursor-pointer px-1 py-0.5 rounded hover:bg-[#23243a] transition" style={{ minHeight: '2rem', overflowWrap: 'anywhere', maxWidth: '100%' }}>
-                                  <input
-                                    type="checkbox"
-                                    checked={filters[type].has(option)}
-                                    onChange={() => handleFilterChange(type, option)}
-                                    className="accent-[#00fff7]"
-                                    style={{ width: '1.15rem', height: '1.15rem', minWidth: '1.15rem', minHeight: '1.15rem', margin: 0, verticalAlign: 'middle' }}
-                                  />
-                                  <span style={{ fontSize: '1rem', lineHeight: '1.15rem', display: 'inline-block', minHeight: '1.15rem', wordBreak: 'break-word', maxWidth: '100%' }}>{option}</span>
-                                </label>
+                                <FilterOption
+                                  key={option}
+                                  checked={filters[type].has(option)}
+                                  label={option}
+                                  onChange={() => handleFilterChange(type, option)}
+                                />
                               ))}
                             </div>
                           )}
@@ -553,16 +550,12 @@ export default function Home() {
                           <div className="font-bold text-[#00fff7] mb-3 uppercase tracking-wider text-lg text-center">{type.charAt(0).toUpperCase() + type.slice(1)}</div>
                           <div className="flex flex-col gap-1" style={{ wordBreak: 'break-word', maxWidth: '100%' }}>
                             {wheels[type].map((option) => (
-                              <label key={option} className="flex items-center gap-2 text-[#eaf6fb] text-base cursor-pointer px-1 py-0.5 rounded hover:bg-[#23243a] transition" style={{ minHeight: '2rem', overflowWrap: 'anywhere', maxWidth: '100%' }}>
-                                <input
-                                  type="checkbox"
-                                  checked={filters[type].has(option)}
-                                  onChange={() => handleFilterChange(type, option)}
-                                  className="accent-[#00fff7]"
-                                  style={{ width: '1.15rem', height: '1.15rem', minWidth: '1.15rem', minHeight: '1.15rem', margin: 0, verticalAlign: 'middle' }}
-                                />
-                                <span style={{ fontSize: '1rem', lineHeight: '1.15rem', display: 'inline-block', minHeight: '1.15rem', wordBreak: 'break-word', maxWidth: '100%' }}>{option}</span>
-                              </label>
+                              <FilterOption
+                                key={option}
+                                checked={filters[type].has(option)}
+                                label={option}
+                                onChange={() => handleFilterChange(type, option)}
+                              />
                             ))}
                           </div>
                         </>

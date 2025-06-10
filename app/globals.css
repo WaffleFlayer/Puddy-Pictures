@@ -212,4 +212,51 @@ body {
     align-items: flex-start !important;
     width: 100%;
   }
+  .filter-option {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.7rem !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0.2rem 0 !important;
+  }
+  .filter-option > input[type="checkbox"] {
+    margin: 0 !important;
+    order: 0 !important;
+    align-self: center !important;
+    display: inline-block !important;
+    min-width: 1.5rem !important;
+    min-height: 1.5rem !important;
+    width: 1.5rem !important;
+    height: 1.5rem !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+    left: 0 !important;
+  }
+  .filter-option > span {
+    order: 1 !important;
+    display: inline-block !important;
+    min-width: 0 !important;
+    text-align: left !important;
+    margin-left: 0.1rem !important;
+    vertical-align: middle !important;
+    flex: 1 1 auto !important;
+    line-height: 1.5rem !important;
+  }
+  @media (max-width: 768px) {
+    .filter-option {
+      gap: 0.7rem !important;
+      padding: 0.2rem 0 !important;
+    }
+    .filter-option > input[type="checkbox"] {
+      min-width: 1.5rem !important;
+      width: 1.5rem !important;
+      height: 1.5rem !important;
+    }
+    .filter-option > span {
+      font-size: 1rem !important;
+      line-height: 1.5rem !important;
+    }
+  }
 }
