@@ -173,20 +173,36 @@ body {
   ::-webkit-scrollbar {
     display: none;
   }
-  /* Ensure filter checkboxes and labels are always in a row */
+  /* Ensure filter checkboxes are left-aligned in a column, label to the right */
   label.flex.items-center {
     flex-direction: row !important;
     align-items: center !important;
     justify-content: flex-start !important;
-    gap: 0.6rem !important;
+    gap: 0.7rem !important;
+    width: 100%;
+    margin: 0;
+    padding: 0.2rem 0;
   }
   label.flex.items-center > input[type="checkbox"] {
     margin: 0 !important;
     order: 0 !important;
+    align-self: flex-start !important;
+    display: inline-block !important;
+    min-width: 1.15rem;
+    min-height: 1.15rem;
+    width: 1.15rem;
+    height: 1.15rem;
   }
   label.flex.items-center > span {
     order: 1 !important;
     display: inline-block !important;
     min-width: 0;
+    text-align: left !important;
+    margin-left: 0.1rem;
+    vertical-align: middle;
+  }
+  /* Make sure the filter column is not centered */
+  .flex.flex-col.gap-1, .flex.flex-col {
+    align-items: flex-start !important;
   }
 }
